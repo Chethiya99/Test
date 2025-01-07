@@ -115,7 +115,7 @@ if st.session_state.db:
                     )
                     
                     extract_task = Task(
-                        description=f"Extract a list of 'merchants' and their 'emails' from the following text:\n\n{st.session_state.raw_output}",
+                        description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
                         agent=extractor_agent,
                         expected_output="A structured list of merchants and their associated email addresses extracted from the given text."
                     )
