@@ -31,7 +31,7 @@ if 'raw_output' not in st.session_state:
 if 'extraction_results' not in st.session_state:
     st.session_state.extraction_results = None
 if 'email_results' not in st.session_state:
-    st.session_state.email_results = []
+    st.session_state.email_results = None
 if 'api_key' not in st.session_state:
     st.session_state.api_key = ""
 
@@ -123,11 +123,9 @@ if st.session_state.db:
                     # Crew execution for extraction 
                     extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
                     extraction_results = extraction_crew.kickoff()
-                    # Assuming extraction results are tuples like (name, email)
-                    if extraction_results:
-                        # Convert results to a list of dictionaries for easier access later on.
-                        st.session_state.merchant_data = [{"name": name, "email": email} for name, email in extraction_results]
-                    
+                    st.session_state.extraction_results = extraction_results if extraction_results else ""
+                    st.session_state.merchant_data = st.session_state.extraction_results
+                
                 except Exception as e:
                     st.error(f"Error executing query: {str(e)}")
         else:
@@ -138,14 +136,12 @@ if st.session_state.raw_output:
     st.markdown("### Query Results:", unsafe_allow_html=True)
     st.write(st.session_state.raw_output)
 
-if isinstance(st.session_state.merchant_data, list):
+if st.session_state.extraction_results:
     st.markdown("### Extracted Merchants:", unsafe_allow_html=True)
-    for merchant in st.session_state.merchant_data:
-        merchant_info = f"Merchant: {merchant['name']}, Email: {merchant['email']}"
-        st.write(merchant_info)
+    st.write(st.session_state.extraction_results.raw)
 
 # Email Generator Button 
-if isinstance(st.session_state.merchant_data, list) and len(st.session_state.merchant_data) > 0 and st.button("Generate Emails"):
+if st.session_state.merchant_data and st.button("Generate Emails"):
     with st.spinner("Generating emails..."):
         try:
             # Define email generation agent 
@@ -159,60 +155,24 @@ if isinstance(st.session_state.merchant_data, list) and len(st.session_state.mer
                 llm=llm_email 
             )
 
-            # Prepare email generation tasks for each merchant 
-            for merchant in st.session_state.merchant_data:
-                merchant_name = merchant['name']
-                merchant_email = merchant['email']
+            # Read the task description from the text file 
+            email_task_description = read_email_task_description(description_file_path)
 
-                task_description = f"""
-                Generate professional marketing emails for the following merchant:
+            # Email generation task using extracted results 
+            task = Task(
+                description=email_task_description.format(merchant_data=st.session_state.merchant_data),
+                agent=email_agent,
+                expected_output="Marketing emails for each selected merchant, tailored to their business details."
+            )
 
-                Merchant: {merchant_name}
-                Email: {merchant_email}
-
-                Use the below format:
-
-                Subject: Boost Customer Traffic for '{merchant_name}' – No Upfront Cost
-
-                Dear '{merchant_name}',
-
-                Thank you for reaching out! We’re excited about the opportunity to support '{merchant_name}' in driving customer traffic and enhancing engagement through our Pulse iD Marketplace. Here’s how our program can benefit your business:
-
-                - Increased Customer Footfall: Targeted campaigns bring high-value customers to your location.
-                - No Upfront Costs: You only fund the discount or offer provided—no hidden fees, no surprises.
-                - Flexibility: You’re in control of your offers and can adjust or opt out anytime.
-
-                Next Steps: Complete our quick onboarding form here: [CTA Link – Merchant Onboarding Form]. This will help us set up your account and customize your campaign.
-
-                If you have any questions or would like to explore offer options, feel free to reach out—I’d be happy to assist!
-
-                Kind Regards,
-                [Your Name]
-                """
-
-                task = Task(
-                    description=task_description,
-                    agent=email_agent,
-                    expected_output=f"Marketing email for {merchant_name}."
-                )
-
-                # Crew execution for each merchant 
-                crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
-                email_result = crew.kickoff()
-
-                # Display results 
-                if email_result.raw:
-                    email_content_with_image = f"""
-                    <div>
-                        <h3>Email for {merchant_name}</h3>
-                        <div>{email_result.raw}</div>
-                    </div>
-                    """
-                    st.markdown(email_content_with_image, unsafe_allow_html=True)
-
-            # Store all results in session state (optional)
-            if isinstance(st.session_state.email_results, list):
-                st.session_state.email_results.append(email_result)
+            # Crew execution 
+            crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
+            email_results = crew.kickoff()
+            st.session_state.email_results = email_results
+            
+            # Display results 
+            st.markdown("### Generated Emails:", unsafe_allow_html=True)
+            st.write(email_results.raw)
         
         except Exception as e:
             st.error(f"Error generating emails: {str(e)}")
