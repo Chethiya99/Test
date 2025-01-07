@@ -140,50 +140,48 @@ if st.session_state.extraction_results:
     st.markdown("### Extracted Merchants:", unsafe_allow_html=True)
     st.write(st.session_state.extraction_results.raw)
 
-# Email Generation Section with Improved UI 
-st.markdown("---")
-st.markdown("<h2 style='text-align: center; color: #4CAF50;'>✉️ Generate Emails</h2>", unsafe_allow_html=True)
+# Email Generator Button 
+if st.session_state.merchant_data and st.button("Generate Emails"):
+    with st.spinner("Generating emails..."):
+        try:
+            # Define email generation agent 
+            llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
+            email_agent = Agent(
+                role="Email Content Generator",
+                goal="Generate personalized marketing emails for merchants.",
+                backstory="You are a marketing expert named 'Sumit Uttamchandani' of Pulse iD fintech company skilled in crafting professional and engaging emails for merchants.",
+                verbose=True,
+                allow_delegation=False,
+                llm=llm_email 
+            )
 
-if st.session_state.merchant_data:
-    if st.button("Generate Emails"):
-        with st.spinner("Generating emails..."):
-            try:
-                # Define email generation agent 
-                llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
-                email_agent = Agent(
-                    role="Email Content Generator",
-                    goal="Generate personalized marketing emails for merchants.",
-                    backstory="You are a marketing expert named 'Sumit Uttamchandani' of Pulse iD fintech company skilled in crafting professional and engaging emails for merchants.",
-                    verbose=True,
-                    allow_delegation=False,
-                    llm=llm_email 
-                )
+            # Read the task description from the text file 
+            email_task_description = read_email_task_description(description_file_path)
 
-                # Read the task description from the text file 
-                email_task_description = read_email_task_description(description_file_path)
+            # Email generation task using extracted results 
+            task = Task(
+                description=email_task_description.format(merchant_data=st.session_state.merchant_data),
+                agent=email_agent,
+                expected_output="Marketing emails for each selected merchant, tailored to their business details."
+            )
 
-                # Email generation task using extracted results 
-                task = Task(
-                    description=email_task_description.format(merchant_data=st.session_state.merchant_data),
-                    agent=email_agent,
-                    expected_output="Marketing emails for each selected merchant, tailored to their business details."
-                )
-
-                # Crew execution 
-                crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
-                email_results = crew.kickoff()
-                st.session_state.email_results = email_results
-                
-                # Display results 
-                if email_results is not None and hasattr(email_results, 'raw'):
-                    st.markdown("### Generated Emails:", unsafe_allow_html=True)
-                    for email in email_results.raw:
-                        st.write(email)
+            # Crew execution 
+            crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
+            email_results = crew.kickoff()
+            st.session_state.email_results = email_results
             
-            except Exception as e:
-                st.error(f"Error generating emails: {str(e)}")
-else:
-    st.warning("⚠️ Please run a query first to generate emails.")
+            # Display results with separation
+            st.markdown("### Generated Emails:", unsafe_allow_html=True)
+            if email_results is not None and hasattr(email_results, 'raw'):
+                for email in email_results.raw:
+                    st.markdown(
+                        f"<div style='border: 1px solid #4CAF50; padding: 10px; margin: 10px 0; border-radius: 5px;'>"
+                        f"<strong>Email Content:</strong><br>{email}</div>",
+                        unsafe_allow_html=True
+                    )
+        
+        except Exception as e:
+            st.error(f"Error generating emails: {str(e)}")
 
 # Footer Section 
 st.markdown("---")
