@@ -123,9 +123,11 @@ if st.session_state.db:
                     # Crew execution for extraction 
                     extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
                     extraction_results = extraction_crew.kickoff()
-                    st.session_state.extraction_results = extraction_results if extraction_results else ""
-                    st.session_state.merchant_data = extraction_results
-                
+                    # Assuming extraction results are tuples like (name, email)
+                    if extraction_results:
+                        # Convert results to a list of dictionaries for easier access later on.
+                        st.session_state.merchant_data = [{"name": name, "email": email} for name, email in extraction_results]
+                    
                 except Exception as e:
                     st.error(f"Error executing query: {str(e)}")
         else:
@@ -136,10 +138,10 @@ if st.session_state.raw_output:
     st.markdown("### Query Results:", unsafe_allow_html=True)
     st.write(st.session_state.raw_output)
 
-if st.session_state.extraction_results:
+if isinstance(st.session_state.merchant_data, list):
     st.markdown("### Extracted Merchants:", unsafe_allow_html=True)
-    for merchant in st.session_state.extraction_results:
-        merchant_info = f"Merchant: {merchant.get('name')}, Email: {merchant.get('email')}"
+    for merchant in st.session_state.merchant_data:
+        merchant_info = f"Merchant: {merchant['name']}, Email: {merchant['email']}"
         st.write(merchant_info)
 
 # Email Generator Button 
@@ -157,10 +159,10 @@ if isinstance(st.session_state.merchant_data, list) and len(st.session_state.mer
                 llm=llm_email 
             )
 
-            # Prepare email generation tasks for each merchant including images 
+            # Prepare email generation tasks for each merchant 
             for merchant in st.session_state.merchant_data:
-                merchant_name = merchant.get('name')  # Adjust based on your data structure.
-                merchant_email = merchant.get('email')  # Adjust based on your data structure.
+                merchant_name = merchant['name']
+                merchant_email = merchant['email']
 
                 task_description = f"""
                 Generate professional marketing emails for the following merchant:
