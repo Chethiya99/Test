@@ -170,15 +170,9 @@ if st.session_state.merchant_data and st.button("Generate Emails"):
             email_results = crew.kickoff()
             st.session_state.email_results = email_results
             
-            # Display results with separation
+            # Display results 
             st.markdown("### Generated Emails:", unsafe_allow_html=True)
-            if email_results is not None and hasattr(email_results, 'raw'):
-                for email in email_results.raw:
-                    st.markdown(
-                        f"<div style='border: 1px solid #4CAF50; padding: 10px; margin: 10px 0; border-radius: 5px;'>"
-                        f"<strong>Email Content:</strong><br>{email}</div>",
-                        unsafe_allow_html=True
-                    )
+            st.write(email_results.raw)
         
         except Exception as e:
             st.error(f"Error generating emails: {str(e)}")
