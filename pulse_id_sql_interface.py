@@ -158,40 +158,42 @@ if st.session_state.merchant_data and st.button("Generate Emails"):
             # Read the task description from the text file 
             email_task_description = read_email_task_description(description_file_path)
 
-            # Email generation task using extracted results 
-            task = Task(
-                description=email_task_description.format(merchant_data=st.session_state.merchant_data),
-                agent=email_agent,
-                expected_output="Marketing emails for each selected merchant, tailored to their business details."
-            )
-
-            # Crew execution 
-            crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
-            email_results = crew.kickoff()
-            st.session_state.email_results = email_results
-            
-            # Display results 
-            if email_results.raw:
-                email_body = email_results.raw  # Get the raw email content
+            # Loop through each merchant to generate emails individually
+            for merchant in st.session_state.merchant_data:  # Assuming merchant_data is a list of merchants.
+                task_description = email_task_description.format(merchant_data=merchant)  # Format description for each merchant
                 
-                # Function to extract image URL from email body
-                def extract_image_url(email_body):
-                    url_pattern = r'https?://[^\s]+'
-                    urls = re.findall(url_pattern, email_body)
-                    return urls[0] if urls else None
+                # Email generation task using extracted results 
+                task = Task(
+                    description=task_description,
+                    agent=email_agent,
+                    expected_output="Marketing email tailored to the selected merchant."
+                )
 
-                # Extract image URL from the email body
-                image_url = extract_image_url(email_body)
+                # Crew execution 
+                crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
+                email_results = crew.kickoff()
 
-                # Insert image into the email body at a specific position (after "Dear Merchant Name")
-                if image_url:
-                    modified_email_body = email_body.replace("Dear", f"Dear,<br><img src='{image_url}' style='max-width: 100%;' />")
+                if email_results.raw:
+                    email_body = email_results.raw  # Get the raw email content
                     
-                    # Display the modified email with image
-                    st.markdown(modified_email_body, unsafe_allow_html=True)
-                else:
-                    # If no image URL found, just display the original email body.
-                    st.markdown(email_body, unsafe_allow_html=True)
+                    # Function to extract image URL from email body
+                    def extract_image_url(email_body):
+                        url_pattern = r'https?://[^\s]+'
+                        urls = re.findall(url_pattern, email_body)
+                        return urls[0] if urls else None
+
+                    # Extract image URL from the email body for this specific merchant's email.
+                    image_url = extract_image_url(email_body)
+
+                    # Insert image into the email body at a specific position (after "Dear Merchant Name")
+                    if image_url:
+                        modified_email_body = email_body.replace("Dear", f"Dear,<br><img src='{image_url}' style='max-width: 100%;' />")
+                        
+                        # Display the modified email with image for each merchant.
+                        st.markdown(modified_email_body, unsafe_allow_html=True)
+                    else:
+                        # If no image URL found, just display the original email body.
+                        st.markdown(email_body, unsafe_allow_html=True)
 
         except Exception as e:
             st.error(f"Error generating emails: {str(e)}")
