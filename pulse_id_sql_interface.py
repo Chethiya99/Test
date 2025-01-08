@@ -12,12 +12,7 @@ from langchain_community.llms import Ollama
 from crewai import Agent, Task, Crew, Process, LLM
 
 # Page Configuration
-st.set_page_config(
-    page_title="Pulse iD - Database Query & Email Generator",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="Pulse iD - Database Query & Email Generator", page_icon="📊", layout="wide", initial_sidebar_state="expanded")
 
 # Initialize session state
 if 'db' not in st.session_state:
@@ -43,23 +38,16 @@ def read_email_task_description(file_path):
     else:
         raise FileNotFoundError(f"The file {file_path} does not exist.")
 
-# Set the path to your text file
+# Set the path to your text file description
 description_file_path = 'email_descriptions/email_task_description.txt'
 
 # Header Section with Title and Logo
-st.image("logo.png", width=150)  # Ensure you have your logo in the working directory
-st.markdown(
-    "<h1 style='text-align: center; color: #4CAF50;'>📊 Pulse iD - SQL Database Query Interface</h1>",
-    unsafe_allow_html=True
-)
-st.markdown(
-    "<h4 style='text-align: center; color: #555;'>Interact with your merchant database and generate emails with ease!</h4>",
-    unsafe_allow_html=True
-)
+st.image("logo.png", width=150)
+st.markdown("<h1 style='text-align: center; color: #4CAF50;'>📊 Pulse iD - SQL Database Query Interface</h1>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: center; color: #555;'>Interact with your merchant database and generate emails with ease!</h4>", unsafe_allow_html=True)
 
 # Sidebar Configuration
 st.sidebar.header("Settings")
-
 def get_api_key():
     """Function to get API Key from user input"""
     return st.sidebar.text_input("Enter Your API Key:", type="password")
@@ -73,7 +61,7 @@ if api_key:
 db_path = st.sidebar.text_input("Database Path:", "merchant_data.db")
 model_name = st.sidebar.selectbox("Select Model:", ["llama3-70b-8192", "llama-3.1-70b-versatile"])
 
-# Initialize SQL Database and Agent
+# Initialize SQL Database and Agent if necessary...
 if db_path and api_key and not st.session_state.db:
     try:
         # Initialize Groq LLM
@@ -81,12 +69,7 @@ if db_path and api_key and not st.session_state.db:
         # Initialize SQLDatabase
         st.session_state.db = SQLDatabase.from_uri(f"sqlite:///{db_path}", sample_rows_in_table_info=3)
         # Create SQL Agent
-        st.session_state.agent_executor = create_sql_agent(
-            llm=llm,
-            db=st.session_state.db,
-            agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-            verbose=True
-        )
+        st.session_state.agent_executor = create_sql_agent(llm=llm, db=st.session_state.db, agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
         st.sidebar.success("✅ Database and LLM Connected Successfully!")
     except Exception as e:
         st.sidebar.error(f"Error: {str(e)}")
@@ -104,34 +87,25 @@ if st.session_state.db:
                     result = st.session_state.agent_executor.invoke(user_query)
                     st.session_state.raw_output = result['output'] if isinstance(result, dict) else result
                     
-                    # Process raw output using an extraction agent 
+                    # Process raw output using an extraction agent...
                     extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
-                    extractor_agent = Agent(
-                        role="Data Extractor",
-                        goal="Extract merchants and emails from the raw output.",
-                        backstory="You are an expert in extracting structured information from text.",
-                        provider="Groq",
-                        llm=extractor_llm 
-                    )
+                    extractor_agent = Agent(role="Data Extractor", goal="Extract merchants and emails from the raw output.", backstory="You are an expert in extracting structured information from text.", provider="Groq", llm=extractor_llm)
                     
-                    extract_task = Task(
-                        description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
-                        agent=extractor_agent,
-                        expected_output="A structured list of merchants and their associated email addresses extracted from the given text."
-                    )
+                    extract_task = Task(description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}", agent=extractor_agent, expected_output="A structured list of merchants and their associated email addresses extracted from the given text.")
                     
-                    # Crew execution for extraction 
+                    # Crew execution for extraction...
                     extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
                     extraction_results = extraction_crew.kickoff()
+                    
                     st.session_state.extraction_results = extraction_results if extraction_results else ""
                     st.session_state.merchant_data = st.session_state.extraction_results
-                
+                    
                 except Exception as e:
                     st.error(f"Error executing query: {str(e)}")
         else:
             st.warning("⚠️ Please enter a query before clicking 'Run Query'.")
 
-# Show previous query results even if Generate Emails is clicked 
+# Show previous query results even if Generate Emails is clicked
 if st.session_state.raw_output:
     st.markdown("### Query Results:", unsafe_allow_html=True)
     st.write(st.session_state.raw_output)
@@ -140,54 +114,41 @@ if st.session_state.extraction_results:
     st.markdown("### Extracted Merchants:", unsafe_allow_html=True)
     st.write(st.session_state.extraction_results.raw)
 
-# Email Generator Button 
+# Email Generator Button
 if st.session_state.merchant_data and st.button("Generate Emails"):
     with st.spinner("Generating emails..."):
         try:
-            # Define email generation agent 
+            # Define email generation agent...
             llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
-            email_agent = Agent(
-                role="Email Content Generator",
-                goal="Generate personalized marketing emails for merchants.",
-                backstory="You are a marketing expert named 'Sumit Uttamchandani' of Pulse iD fintech company skilled in crafting professional and engaging emails for merchants.",
-                verbose=True,
-                allow_delegation=False,
-                llm=llm_email 
-            )
+            email_agent = Agent(role="Email Content Generator", goal="Generate personalized marketing emails for merchants.", backstory="You are a marketing expert named 'Sumit Uttamchandani' of Pulse iD fintech company skilled in crafting professional and engaging emails for merchants.", verbose=True, allow_delegation=False, llm=llm_email)
 
-            # Read the task description from the text file 
+            # Read the task description from the text file...
             email_task_description = read_email_task_description(description_file_path)
 
-            # Email generation task using extracted results 
-            task = Task(
-                description=email_task_description.format(merchant_data=st.session_state.merchant_data),
-                agent=email_agent,
-                expected_output="Marketing emails for each selected merchant, tailored to their business details."
-            )
+            # Email generation task using extracted results...
+            task = Task(description=email_task_description.format(merchant_data=st.session_state.merchant_data), agent=email_agent, expected_output="Marketing emails for each selected merchant, tailored to their business details.")
 
-            # Crew execution 
+            # Crew execution...
             crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
             email_results = crew.kickoff()
             st.session_state.email_results = email_results
             
-            # Display results 
+            # Display results if email_results.raw...
             if email_results.raw:
-                email_body = email_results.raw  # Get the raw email content
+                email_body = email_results.raw
                 
-                # Function to extract image URL from email body
+                # Extract image URL from email body...
                 def extract_image_url(email_body):
                     url_pattern = r'https?://[^\s]+'
                     urls = re.findall(url_pattern, email_body)
                     return urls[0] if urls else None
-
-                # Extract image URL from the email body
+                
                 image_url = extract_image_url(email_body)
 
-                # Insert image into the email body at a specific position (after "Dear Merchant Name")
+                # Insert image into the email body at a specific position (after "Dear Merchant Name")...
                 if image_url:
                     modified_email_body = email_body.replace("Dear", f"Dear,<br><img src='{image_url}' style='max-width: 100%;' />")
-                    
-                    # Display the modified email with image
+                    # Display the modified email with image...
                     st.markdown(modified_email_body, unsafe_allow_html=True)
                 else:
                     # If no image URL found, just display the original email body.
@@ -196,9 +157,9 @@ if st.session_state.merchant_data and st.button("Generate Emails"):
         except Exception as e:
             st.error(f"Error generating emails: {str(e)}")
 
-# Footer Section 
+# Footer Section
 st.markdown("---")
-st.markdown(
-    "<div style='text-align: center; font-size: 14px;'>Powered by <strong>Pulse iD</strong> | Built with 🐍 Python and Streamlit</div>",
-    unsafe_allow_html=True 
-)
+st.markdown("<div style='text-align: center; font-size: 14px;'>Powered by <strong>Pulse iD</strong> | Built with 🐍 Python and Streamlit</div>", unsafe_allow_html=True)
+
+# Input area for new queries after displaying results.
+user_query_new = st.text_area("Enter your next query:", placeholder="E.g., Show top 5 merchants.")
