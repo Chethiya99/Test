@@ -1,7 +1,6 @@
 __import__('pysqlite3')
 import sys
 import os
-import re
 import pandas as pd
 import streamlit as st
 from langchain_community.utilities import SQLDatabase
