@@ -92,7 +92,7 @@ if db_path and api_key and not st.session_state.db:
         st.sidebar.error(f"Error: {str(e)}")
 
 # Query Input Section
-if st.session_state.db:
+def render_query_section():
     st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
     user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.")
     
@@ -104,7 +104,7 @@ if st.session_state.db:
                     result = st.session_state.agent_executor.invoke(user_query)
                     st.session_state.raw_output = result['output'] if isinstance(result, dict) else result
                     
-                    # Process raw output using an extraction agent 
+                    # Process raw output using an extraction agent
                     extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
                     extractor_agent = Agent(
                         role="Data Extractor",
@@ -120,7 +120,7 @@ if st.session_state.db:
                         expected_output="A structured list of merchants and their associated email addresses extracted from the given text."
                     )
                     
-                    # Crew execution for extraction 
+                    # Crew execution for extraction
                     extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
                     extraction_results = extraction_crew.kickoff()
                     st.session_state.extraction_results = extraction_results if extraction_results else ""
@@ -140,11 +140,11 @@ if st.session_state.extraction_results:
     st.markdown("### Extracted Merchants:", unsafe_allow_html=True)
     st.write(st.session_state.extraction_results.raw)
 
-# Email Generator Button 
+# Email Generator Button
 if st.session_state.merchant_data and st.button("Generate Emails"):
     with st.spinner("Generating emails..."):
         try:
-            # Define email generation agent 
+            # Define email generation agent
             llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
             email_agent = Agent(
                 role="Email Content Generator",
@@ -155,22 +155,22 @@ if st.session_state.merchant_data and st.button("Generate Emails"):
                 llm=llm_email 
             )
 
-            # Read the task description from the text file 
+            # Read the task description from the text file
             email_task_description = read_email_task_description(description_file_path)
 
-            # Email generation task using extracted results 
+            # Email generation task using extracted results
             task = Task(
                 description=email_task_description.format(merchant_data=st.session_state.merchant_data),
                 agent=email_agent,
                 expected_output="Marketing emails for each selected merchant, tailored to their business details."
             )
 
-            # Crew execution 
+            # Crew execution
             crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
             email_results = crew.kickoff()
             st.session_state.email_results = email_results
             
-            # Display results 
+            # Display results
             if email_results.raw:
                 email_body = email_results.raw  # Get the raw email content
                 
@@ -193,8 +193,15 @@ if st.session_state.merchant_data and st.button("Generate Emails"):
                     # If no image URL found, just display the original email body.
                     st.markdown(email_body, unsafe_allow_html=True)
 
+            # Render the query section again after email generation
+            st.markdown("---")
+            st.markdown("### Enter Next Query:", unsafe_allow_html=True)
+            render_query_section()
+
         except Exception as e:
             st.error(f"Error generating emails: {str(e)}")
+else:
+    render_query_section()
 
 # Footer Section 
 st.markdown("---")
