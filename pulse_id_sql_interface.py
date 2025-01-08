@@ -1,15 +1,15 @@
 __import__('pysqlite3')
 import sys
 import os
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-from langchain_community.utilities import SQLDatabase
+import re
+import pandas as pd
 import streamlit as st
+from langchain_community.utilities import SQLDatabase
 from langchain_community.agent_toolkits import create_sql_agent
 from langchain_groq import ChatGroq
 from langchain.agents import AgentType
 from langchain_community.llms import Ollama
 from crewai import Agent, Task, Crew, Process, LLM
-import pandas as pd
 
 # Page Configuration
 st.set_page_config(
@@ -171,9 +171,28 @@ if st.session_state.merchant_data and st.button("Generate Emails"):
             st.session_state.email_results = email_results
             
             # Display results 
-            st.markdown("### Generated Emails:", unsafe_allow_html=True)
-            st.write(email_results.raw)
-        
+            if email_results.raw:
+                email_body = email_results.raw  # Get the raw email content
+                
+                # Function to extract image URL from email body
+                def extract_image_url(email_body):
+                    url_pattern = r'https?://[^\s]+'
+                    urls = re.findall(url_pattern, email_body)
+                    return urls[0] if urls else None
+
+                # Extract image URL from the email body
+                image_url = extract_image_url(email_body)
+
+                # Insert image into the email body at a specific position (after "Dear Merchant Name")
+                if image_url:
+                    modified_email_body = email_body.replace("Dear", f"Dear,<br><img src='{image_url}' style='max-width: 100%;' />")
+                    
+                    # Display the modified email with image
+                    st.markdown(modified_email_body, unsafe_allow_html=True)
+                else:
+                    # If no image URL found, just display the original email body.
+                    st.markdown(email_body, unsafe_allow_html=True)
+
         except Exception as e:
             st.error(f"Error generating emails: {str(e)}")
 
