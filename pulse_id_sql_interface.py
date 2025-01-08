@@ -1,3 +1,4 @@
+# Import necessary libraries
 __import__('pysqlite3')
 import sys
 import os
@@ -34,6 +35,8 @@ if 'email_results' not in st.session_state:
     st.session_state.email_results = None
 if 'api_key' not in st.session_state:
     st.session_state.api_key = ""
+if 'query_completed' not in st.session_state:
+    st.session_state.query_completed = False
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -92,46 +95,47 @@ if db_path and api_key and not st.session_state.db:
         st.sidebar.error(f"Error: {str(e)}")
 
 # Query Input Section
-def render_query_section():
-    st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
-    user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.")
-    
-    if st.button("Run Query", key="run_query"):
-        if user_query:
-            with st.spinner("Running query..."):
-                try:
-                    # Execute the query using the agent
-                    result = st.session_state.agent_executor.invoke(user_query)
-                    st.session_state.raw_output = result['output'] if isinstance(result, dict) else result
+if st.session_state.db:
+    if not st.session_state.query_completed:
+        st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
+        user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.")
+        
+        if st.button("Run Query", key="run_query"):
+            if user_query:
+                with st.spinner("Running query..."):
+                    try:
+                        # Execute the query using the agent
+                        result = st.session_state.agent_executor.invoke(user_query)
+                        st.session_state.raw_output = result['output'] if isinstance(result, dict) else result
+                        
+                        # Process raw output using an extraction agent 
+                        extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
+                        extractor_agent = Agent(
+                            role="Data Extractor",
+                            goal="Extract merchants and emails from the raw output.",
+                            backstory="You are an expert in extracting structured information from text.",
+                            provider="Groq",
+                            llm=extractor_llm 
+                        )
+                        
+                        extract_task = Task(
+                            description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
+                            agent=extractor_agent,
+                            expected_output="A structured list of merchants and their associated email addresses extracted from the given text."
+                        )
+                        
+                        # Crew execution for extraction 
+                        extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
+                        extraction_results = extraction_crew.kickoff()
+                        st.session_state.extraction_results = extraction_results if extraction_results else ""
+                        st.session_state.merchant_data = st.session_state.extraction_results
+                        st.session_state.query_completed = True
                     
-                    # Process raw output using an extraction agent
-                    extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
-                    extractor_agent = Agent(
-                        role="Data Extractor",
-                        goal="Extract merchants and emails from the raw output.",
-                        backstory="You are an expert in extracting structured information from text.",
-                        provider="Groq",
-                        llm=extractor_llm 
-                    )
-                    
-                    extract_task = Task(
-                        description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
-                        agent=extractor_agent,
-                        expected_output="A structured list of merchants and their associated email addresses extracted from the given text."
-                    )
-                    
-                    # Crew execution for extraction
-                    extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
-                    extraction_results = extraction_crew.kickoff()
-                    st.session_state.extraction_results = extraction_results if extraction_results else ""
-                    st.session_state.merchant_data = st.session_state.extraction_results
-                
-                except Exception as e:
-                    st.error(f"Error executing query: {str(e)}")
-        else:
-            st.warning("⚠️ Please enter a query before clicking 'Run Query'.")
+                    except Exception as e:
+                        st.error(f"Error executing query: {str(e)}")
+            else:
+                st.warning("⚠️ Please enter a query before clicking 'Run Query'.")
 
-# Show previous query results even if Generate Emails is clicked 
 if st.session_state.raw_output:
     st.markdown("### Query Results:", unsafe_allow_html=True)
     st.write(st.session_state.raw_output)
@@ -140,11 +144,11 @@ if st.session_state.extraction_results:
     st.markdown("### Extracted Merchants:", unsafe_allow_html=True)
     st.write(st.session_state.extraction_results.raw)
 
-# Email Generator Button
-if st.session_state.merchant_data and st.button("Generate Emails"):
+# Email Generator Button 
+if st.session_state.query_completed and st.session_state.merchant_data and st.button("Generate Emails"):
     with st.spinner("Generating emails..."):
         try:
-            # Define email generation agent
+            # Define email generation agent 
             llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
             email_agent = Agent(
                 role="Email Content Generator",
@@ -155,22 +159,22 @@ if st.session_state.merchant_data and st.button("Generate Emails"):
                 llm=llm_email 
             )
 
-            # Read the task description from the text file
+            # Read the task description from the text file 
             email_task_description = read_email_task_description(description_file_path)
 
-            # Email generation task using extracted results
+            # Email generation task using extracted results 
             task = Task(
                 description=email_task_description.format(merchant_data=st.session_state.merchant_data),
                 agent=email_agent,
                 expected_output="Marketing emails for each selected merchant, tailored to their business details."
             )
 
-            # Crew execution
+            # Crew execution 
             crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
             email_results = crew.kickoff()
             st.session_state.email_results = email_results
             
-            # Display results
+            # Display results 
             if email_results.raw:
                 email_body = email_results.raw  # Get the raw email content
                 
@@ -192,16 +196,15 @@ if st.session_state.merchant_data and st.button("Generate Emails"):
                 else:
                     # If no image URL found, just display the original email body.
                     st.markdown(email_body, unsafe_allow_html=True)
-
-            # Render the query section again after email generation
-            st.markdown("---")
-            st.markdown("### Enter Next Query:", unsafe_allow_html=True)
-            render_query_section()
+            
+            # Reset state for the next cycle
+            st.session_state.raw_output = ""
+            st.session_state.extraction_results = None
+            st.session_state.merchant_data = None
+            st.session_state.query_completed = False
 
         except Exception as e:
             st.error(f"Error generating emails: {str(e)}")
-else:
-    render_query_section()
 
 # Footer Section 
 st.markdown("---")
