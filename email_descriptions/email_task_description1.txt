@@ -7,7 +7,7 @@ Use the below format:
 Subject: Boost Customer Traffic for 'merchant_name' – No Upfront Cost
 
 Dear 'merchant_name',
-'image url'
+
 
 We’re excited about the opportunity to support 'merchant_name' in driving customer traffic and enhancing engagement through our Pulse iD Marketplace. Here’s how our program can benefit your business:
 
@@ -23,7 +23,7 @@ To give you an example, XYZ Coffee in Dubai partnered with us to offer a 15% dis
 **Next Steps**: Complete our quick onboarding form here: [CTA Link – Merchant Onboarding Form]. This will help us set up your account and customize your campaign.
 
 If you have any questions or would like to explore offer options, feel free to reach out—I’d be happy to assist!
-
+'image url'
 Kind Regards,
 Also randomly select three case studeis among below and add to the email body:
 01.Zions Bank's Merchant-Funded Rewards Program 
