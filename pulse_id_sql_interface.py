@@ -71,32 +71,34 @@ if db_path and api_key and not st.session_state.db:
     except Exception as e:
         st.sidebar.error(f"Error: {str(e)}")
 
+# Function to execute queries and process results
+def execute_query(user_query):
+    if user_query:
+        with st.spinner("Running query..."):
+            try:
+                result = st.session_state.agent_executor.invoke(user_query)
+                st.session_state.raw_output = result['output'] if isinstance(result, dict) else result
+
+                # Process raw output using an extraction agent
+                extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
+                extractor_agent = Agent(role="Data Extractor", goal="Extract merchants and emails from the raw output.", backstory="You are an expert in extracting structured information from text.", provider="Groq", llm=extractor_llm)
+
+                extract_task = Task(description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}", agent=extractor_agent, expected_output="A structured list of merchants and their associated email addresses extracted from the given text.")
+                
+                extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
+                extraction_results = extraction_crew.kickoff()
+                st.session_state.extraction_results = extraction_results if extraction_results else ""
+                st.session_state.merchant_data = st.session_state.extraction_results
+
+            except Exception as e:
+                st.error(f"Error executing query: {str(e)}")
+
 # Query Input Section
 if st.session_state.db:
     user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.", key="user_query")
     
     if st.button("Run Query", key="run_query"):
-        if user_query:
-            with st.spinner("Running query..."):
-                try:
-                    result = st.session_state.agent_executor.invoke(user_query)
-                    st.session_state.raw_output = result['output'] if isinstance(result, dict) else result
-
-                    # Process raw output using an extraction agent
-                    extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
-                    extractor_agent = Agent(role="Data Extractor", goal="Extract merchants and emails from the raw output.", backstory="You are an expert in extracting structured information from text.", provider="Groq", llm=extractor_llm)
-
-                    extract_task = Task(description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}", agent=extractor_agent, expected_output="A structured list of merchants and their associated email addresses extracted from the given text.")
-                    
-                    extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
-                    extraction_results = extraction_crew.kickoff()
-                    st.session_state.extraction_results = extraction_results if extraction_results else ""
-                    st.session_state.merchant_data = st.session_state.extraction_results
-
-                except Exception as e:
-                    st.error(f"Error executing query: {str(e)}")
-        else:
-            st.warning("⚠️ Please enter a query before clicking 'Run Query'.")
+        execute_query(user_query)
 
     # Show previous query results even if Generate Emails is clicked
     if st.session_state.raw_output:
@@ -108,7 +110,7 @@ if st.session_state.db:
         st.write(st.session_state.extraction_results.raw)
 
     # Email Generator Button
-    if st.session_state.merchant_data and st.button("Generate Emails", key="generate_emails"):
+    if st.session_state.merchant_data and st.button("Generate Emails"):
         with st.spinner("Generating emails..."):
             try:
                 llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
@@ -146,18 +148,9 @@ if st.session_state.db:
     # Input for Next Question below generated emails results.
     next_question_input = st.text_area("Enter your next question:", placeholder="E.g., What are the latest updates on merchants?", key="next_question")
     
-    # Add Run Query button below next question input.
+    # Add Run Next Query button below next question input.
     if next_question_input and st.button("Run Next Query", key="run_next_query"):
-        user_query = next_question_input  # Assign new query to user_query variable.
-        if user_query:
-            with st.spinner("Running next query..."):
-                try:
-                    result_next_query = st.session_state.agent_executor.invoke(user_query)
-                    # Handle result processing similar to above...
-                    # (You can repeat the processing logic here or refactor it into a function if needed.)
-                    
-                except Exception as e:
-                    st.error(f"Error executing next query: {str(e)}")
+        execute_query(next_question_input)  # Call the same function to execute the new query.
 
 # Footer Section remains constant across interactions.
 st.markdown("---")
