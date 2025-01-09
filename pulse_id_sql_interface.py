@@ -41,6 +41,8 @@ if 'selected_db' not in st.session_state:
     st.session_state.selected_db = "merchant_data.db"  # Default database
 if 'db_initialized' not in st.session_state:
     st.session_state.db_initialized = False  # Track if the database is initialized
+if 'selected_template' not in st.session_state:
+    st.session_state.selected_template = "email_task_description1.txt"  # Default template
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -49,9 +51,6 @@ def read_email_task_description(file_path):
             return file.read()
     else:
         raise FileNotFoundError(f"The file {file_path} does not exist.")
-
-# Set the path to your text file
-description_file_path = 'email_descriptions/email_task_description.txt'
 
 # Header Section with Title and Logo
 st.image("logo.png", width=150)  # Ensure you have your logo in the working directory
@@ -88,6 +87,11 @@ if new_selected_db != st.session_state.selected_db:
 
 # Model Selection
 model_name = st.sidebar.selectbox("Select Model:", ["llama3-70b-8192", "llama-3.1-70b-versatile"])
+
+# Email Template Selection
+template_options = ["email_task_description1.txt", "email_task_description2.txt", "email_task_description3.txt"]
+st.session_state.selected_template = st.sidebar.selectbox("Select Email Template:", template_options, index=template_options.index(st.session_state.selected_template))
+st.sidebar.success(f"✅ Selected Template: {st.session_state.selected_template}")
 
 # Initialize SQL Database and Agent
 if st.session_state.selected_db and api_key and not st.session_state.db_initialized:
@@ -195,7 +199,8 @@ if st.session_state.merchant_data:
                     llm=llm_email 
                 )
 
-                # Read the task description from the text file 
+                # Read the task description from the selected template file
+                description_file_path = f"email_descriptions/{st.session_state.selected_template}"
                 email_task_description = read_email_task_description(description_file_path)
 
                 # Email generation task using extracted results 
