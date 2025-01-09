@@ -162,15 +162,6 @@ def render_query_section():
         else:
             st.warning("⚠️ Please enter a query before clicking 'Run Query'.")
 
-    # Display the results immediately after the query is executed
-    if st.session_state.raw_output:
-        st.markdown("**Raw Output:**")
-        st.write(st.session_state.raw_output)
-        
-        if st.session_state.extraction_results:
-            st.markdown("**Extracted Merchants:**")
-            st.write(st.session_state.extraction_results.raw)
-
 # Display Interaction History
 if st.session_state.interaction_history:
     st.markdown("### Interaction History:", unsafe_allow_html=True)
