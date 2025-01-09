@@ -1,6 +1,7 @@
 __import__('pysqlite3')
 import sys
 import os
+import time  # Import the time module for delays
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 import re
 import pandas as pd
@@ -38,15 +39,17 @@ if 'api_key' not in st.session_state:
 if 'interaction_history' not in st.session_state:
     st.session_state.interaction_history = []  # Store all interactions (queries, results, emails)
 if 'selected_db' not in st.session_state:
-    st.session_state.selected_db = "merchant_data.db"  # Default database
+    st.session_state.selected_db = "merchant_data_dubai.db"  # Default database
 if 'db_initialized' not in st.session_state:
     st.session_state.db_initialized = False  # Track if the database is initialized
 if 'selected_template' not in st.session_state:
     st.session_state.selected_template = "email_task_description1.txt"  # Default template
 if 'last_query' not in st.session_state:
     st.session_state.last_query = ""  # Store the last query executed
-if 'query_submitted' not in st.session_state:
-    st.session_state.query_submitted = False  # Track if the query is submitted via Enter key
+if 'query_retry_count' not in st.session_state:
+    st.session_state.query_retry_count = 0  # Track the number of retries
+if 'query_retry_time' not in st.session_state:
+    st.session_state.query_retry_time = 0  # Track the time of the last retry
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -80,7 +83,7 @@ if api_key:
     st.session_state.api_key = api_key
 
 # Database Selection
-db_options = ["merchant_data.db", "merchant_data_singapore.db"]
+db_options = ["merchant_data_dubai.db", "merchant_data_singapore.db"]
 new_selected_db = st.sidebar.selectbox("Select Database:", db_options, index=db_options.index(st.session_state.selected_db))
 
 # Check if the database selection has changed
@@ -104,13 +107,13 @@ if st.session_state.selected_db and api_key and not st.session_state.db_initiali
         llm = ChatGroq(temperature=0, model_name=model_name, api_key=st.session_state.api_key)
         # Initialize SQLDatabase
         st.session_state.db = SQLDatabase.from_uri(f"sqlite:///{st.session_state.selected_db}", sample_rows_in_table_info=3)
-        # Create SQL Agent with handle_parsing_errors=True
+        # Create SQL Agent
         st.session_state.agent_executor = create_sql_agent(
             llm=llm,
             db=st.session_state.db,
             agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
             verbose=True,
-            handle_parsing_errors=True  # Add this line to handle parsing errors
+            handle_parsing_errors=True  # Enable parsing error handling
         )
         st.session_state.db_initialized = True  # Mark database as initialized
         st.sidebar.success("✅ Database and LLM Connected Successfully!")
@@ -157,41 +160,37 @@ def execute_query(user_query):
                         "extraction_results": st.session_state.extraction_results
                     }
                 })
+                
+                # Reset retry count and time
+                st.session_state.query_retry_count = 0
+                st.session_state.query_retry_time = 0
             
             except Exception as e:
                 st.error(f"Error executing query: {str(e)}")
+                # Increment retry count and set retry time
+                st.session_state.query_retry_count += 1
+                st.session_state.query_retry_time = time.time()  # Record the current time
     else:
-        st.warning("⚠️ Please enter a query before submitting.")
+        st.warning("⚠️ Please enter a query before clicking 'Run Query'.")
 
 # Function to render the "Enter Query" section
 def render_query_section():
     st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
     user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.", key=f"query_{len(st.session_state.interaction_history)}")
     
-    # Check if the Enter key is pressed
-    if st.session_state.query_submitted:
-        execute_query(user_query)
-        st.session_state.query_submitted = False  # Reset the flag
-
-    # Use JavaScript to detect Enter key press
-    st.markdown(
-        """
-        <script>
-        const textarea = document.querySelector("textarea");
-        textarea.addEventListener("keydown", function(event) {
-            if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                Streamlit.setComponentValue("query_submitted");
-            }
-        });
-        </script>
-        """,
-        unsafe_allow_html=True
-    )
-
-    # Add a "Run Query" button
     if st.button("Run Query", key=f"run_query_{len(st.session_state.interaction_history)}"):
-        execute_query(user_query)
+        if user_query:
+            execute_query(user_query)
+        else:
+            st.warning("⚠️ Please enter a query before clicking 'Run Query'.")
+
+# Retry logic for failed queries
+if st.session_state.query_retry_count > 0:
+    current_time = time.time()
+    retry_delay = 15  # Retry after 15 seconds
+    if current_time - st.session_state.query_retry_time >= retry_delay:
+        st.write("Retrying query...")
+        execute_query(st.session_state.last_query)
 
 # Display Interaction History
 if st.session_state.interaction_history:
