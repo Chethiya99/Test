@@ -94,12 +94,12 @@ if db_path and api_key and not st.session_state.db:
     except Exception as e:
         st.sidebar.error(f"Error: {str(e)}")
 
-# Query Input Section
-if st.session_state.db:
+# Function to render the "Enter Query" section
+def render_query_section():
     st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
-    user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.")
+    user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.", key=f"query_{len(st.session_state.interaction_history)}")
     
-    if st.button("Run Query", key="run_query"):
+    if st.button("Run Query", key=f"run_query_{len(st.session_state.interaction_history)}"):
         if user_query:
             with st.spinner("Running query..."):
                 try:
@@ -147,7 +147,7 @@ if st.session_state.db:
 # Display Interaction History
 if st.session_state.interaction_history:
     st.markdown("### Interaction History:", unsafe_allow_html=True)
-    for interaction in st.session_state.interaction_history:
+    for idx, interaction in enumerate(st.session_state.interaction_history):
         if interaction["type"] == "query":
             st.markdown(f"#### Query: {interaction['content']['query']}")
             st.markdown("**Raw Output:**")
@@ -158,10 +158,17 @@ if st.session_state.interaction_history:
         elif interaction["type"] == "email":
             st.markdown("#### Generated Email:")
             st.markdown(interaction['content'], unsafe_allow_html=True)
+        
+        # Render the "Enter Query" section below each interaction
+        render_query_section()
         st.markdown("---")
 
+# Initial "Enter Query" section (if no interactions yet)
+if not st.session_state.interaction_history:
+    render_query_section()
+
 # Email Generator Button 
-if st.session_state.merchant_data and st.button("Generate Emails"):
+if st.session_state.merchant_data and st.button("Generate Emails", key="generate_emails"):
     with st.spinner("Generating emails..."):
         try:
             # Define email generation agent 
