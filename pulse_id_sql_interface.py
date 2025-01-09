@@ -102,12 +102,13 @@ if st.session_state.selected_db and api_key and not st.session_state.db_initiali
         llm = ChatGroq(temperature=0, model_name=model_name, api_key=st.session_state.api_key)
         # Initialize SQLDatabase
         st.session_state.db = SQLDatabase.from_uri(f"sqlite:///{st.session_state.selected_db}", sample_rows_in_table_info=3)
-        # Create SQL Agent
+        # Create SQL Agent with handle_parsing_errors=True
         st.session_state.agent_executor = create_sql_agent(
             llm=llm,
             db=st.session_state.db,
             agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-            verbose=True
+            verbose=True,
+            handle_parsing_errors=True  # Add this line to handle parsing errors
         )
         st.session_state.db_initialized = True  # Mark database as initialized
         st.sidebar.success("✅ Database and LLM Connected Successfully!")
