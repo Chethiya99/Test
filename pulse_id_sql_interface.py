@@ -256,7 +256,7 @@ if st.session_state.merchant_data:
 # Trigger a re-run if needed
 if st.session_state.trigger_rerun:
     st.session_state.trigger_rerun = False  # Reset the trigger
-    st.experimental_rerun()  # Force a re-run of the script
+    st.rerun()  # Force a re-run of the script
 
 # Footer Section 
 st.markdown("---")
