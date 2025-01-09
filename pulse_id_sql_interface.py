@@ -39,6 +39,8 @@ if 'interaction_history' not in st.session_state:
     st.session_state.interaction_history = []  # Store all interactions (queries, results, emails)
 if 'selected_db' not in st.session_state:
     st.session_state.selected_db = "merchant_data.db"  # Default database
+if 'db_initialized' not in st.session_state:
+    st.session_state.db_initialized = False  # Track if the database is initialized
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -76,13 +78,19 @@ if api_key:
 
 # Database Selection
 db_options = ["merchant_data.db", "merchant_data_singapore.db"]
-st.session_state.selected_db = st.sidebar.selectbox("Select Database:", db_options, index=db_options.index(st.session_state.selected_db))
+new_selected_db = st.sidebar.selectbox("Select Database:", db_options, index=db_options.index(st.session_state.selected_db))
+
+# Check if the database selection has changed
+if new_selected_db != st.session_state.selected_db:
+    st.session_state.selected_db = new_selected_db
+    st.session_state.db_initialized = False  # Reset database initialization
+    st.sidebar.success(f"✅ Switched to database: {st.session_state.selected_db}")
 
 # Model Selection
 model_name = st.sidebar.selectbox("Select Model:", ["llama3-70b-8192", "llama-3.1-70b-versatile"])
 
 # Initialize SQL Database and Agent
-if st.session_state.selected_db and api_key and not st.session_state.db:
+if st.session_state.selected_db and api_key and not st.session_state.db_initialized:
     try:
         # Initialize Groq LLM
         llm = ChatGroq(temperature=0, model_name=model_name, api_key=st.session_state.api_key)
@@ -95,6 +103,7 @@ if st.session_state.selected_db and api_key and not st.session_state.db:
             agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
             verbose=True
         )
+        st.session_state.db_initialized = True  # Mark database as initialized
         st.sidebar.success("✅ Database and LLM Connected Successfully!")
     except Exception as e:
         st.sidebar.error(f"Error: {str(e)}")
