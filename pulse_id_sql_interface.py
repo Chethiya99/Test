@@ -134,12 +134,17 @@ if st.session_state.db:
 
                     if image_url:
                         modified_email_body = email_body.replace("Dear", f"Dear,<br><img src='{image_url}' style='max-width: 100%;' />")
+                        # Display the modified email with image
                         st.markdown(modified_email_body, unsafe_allow_html=True)
                     else:
+                        # If no image URL found, just display the original email body.
                         st.markdown(email_body, unsafe_allow_html=True)
 
             except Exception as e:
                 st.error(f"Error generating emails: {str(e)}")
+
+    # Input for Next Question below generated emails results.
+    next_question_input = st.text_area("Enter your next question:", placeholder="E.g., What are the latest updates on merchants?", key="next_question")
 
 # Footer Section remains constant across interactions.
 st.markdown("---")
