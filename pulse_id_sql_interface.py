@@ -37,8 +37,8 @@ if 'api_key' not in st.session_state:
     st.session_state.api_key = ""
 if 'interaction_history' not in st.session_state:
     st.session_state.interaction_history = []  # Store all interactions (queries, results, emails)
-if 'last_query' not in st.session_state:
-    st.session_state.last_query = ""  # Store the last query executed
+if 'selected_db' not in st.session_state:
+    st.session_state.selected_db = "merchant_data.db"  # Default database
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -74,17 +74,20 @@ api_key = get_api_key()
 if api_key:
     st.session_state.api_key = api_key
 
-# Database Path Input
-db_path = st.sidebar.text_input("Database Path:", "merchant_data.db")
+# Database Selection
+db_options = ["merchant_data.db", "merchant_data_singapore.db"]
+st.session_state.selected_db = st.sidebar.selectbox("Select Database:", db_options, index=db_options.index(st.session_state.selected_db))
+
+# Model Selection
 model_name = st.sidebar.selectbox("Select Model:", ["llama3-70b-8192", "llama-3.1-70b-versatile"])
 
 # Initialize SQL Database and Agent
-if db_path and api_key and not st.session_state.db:
+if st.session_state.selected_db and api_key and not st.session_state.db:
     try:
         # Initialize Groq LLM
         llm = ChatGroq(temperature=0, model_name=model_name, api_key=st.session_state.api_key)
         # Initialize SQLDatabase
-        st.session_state.db = SQLDatabase.from_uri(f"sqlite:///{db_path}", sample_rows_in_table_info=3)
+        st.session_state.db = SQLDatabase.from_uri(f"sqlite:///{st.session_state.selected_db}", sample_rows_in_table_info=3)
         # Create SQL Agent
         st.session_state.agent_executor = create_sql_agent(
             llm=llm,
@@ -103,7 +106,6 @@ def render_query_section():
     
     if st.button("Run Query", key=f"run_query_{len(st.session_state.interaction_history)}"):
         if user_query:
-            st.session_state.last_query = user_query  # Store the last query
             with st.spinner("Running query..."):
                 try:
                     # Execute the query using the agent
