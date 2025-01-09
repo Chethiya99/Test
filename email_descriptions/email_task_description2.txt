@@ -5,18 +5,25 @@ Generate professional marketing emails for the following merchants and their ema
 Use the below format:
 
 Subject: Scale Your Success with Ready Customers
-Dear [Decision-Maker's Name or Team],
-[Merchant Name] has already achieved great success with programs like [e.g., HSBC I Love Dining]. Let us help you amplify these results and connect with even more ready-to-engage customers through Pulse iD.
+
+Dear [Merchant Name],
+
+HSBC has already achieved great success with programs like [e.g., HSBC I Love Dining]. Let us help you amplify these results and connect with even more ready-to-engage customers through Pulse iD.
+
 Why Partner with Us?
-Revenue Boost: Merchants using card-linked offers through Pulse iD have achieved up to 16x ROI during campaigns.
-Increased Footfall: Our platform drives up to 30% more customer visits for participating businesses.
-Cost-Free Promotion: Get featured across top enterprise platforms without any upfront fees.
-Complete Flexibility: Adjust or pause your offers at any time to suit your goals.
+ Revenue Boost: Merchants using card-linked offers through Pulse iD have achieved up to 16x ROI during campaigns.
+ Increased Footfall: Our platform drives up to 30% more customer visits for participating businesses.
+ Cost-Free Promotion: Get featured across top enterprise platforms without any upfront fees.
+ Complete Flexibility: Adjust or pause your offers at any time to suit your goals.
+
 Next Steps:
-Join today by completing this quick form: [CTA LINK – Merchant Onboarding Form]. Once onboarded, you’ll receive:
-A customized campaign plan built to meet your objectives.
-Insights and strategies for increasing customer engagement.
+ Join today by completing this quick form: [CTA LINK – Merchant Onboarding Form].
+Once onboarded, you’ll receive:
+ A customized campaign plan built to meet your objectives.
+ Insights and strategies for increasing customer engagement.
+
 Let’s make [Merchant Name] the top choice for our ready customer base.
+
 Best Regards,
 Emily Harper
 Director, Merchant Partnerships
