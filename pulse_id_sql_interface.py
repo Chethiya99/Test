@@ -71,9 +71,8 @@ if db_path and api_key and not st.session_state.db:
 
 # Query Input Section
 if st.session_state.db:
-    st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
-    user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.")
-    
+    user_query = st.text_area("Enter your query:", placeholder="E.g., Give top 2 merchants and their emails and image urls.")
+
     if st.button("Run Query", key="run_query"):
         if user_query:
             with st.spinner("Running query..."):
@@ -86,33 +85,35 @@ if st.session_state.db:
                     extractor_agent = Agent(role="Data Extractor", goal="Extract merchants and emails from the raw output.", backstory="You are an expert in extracting structured information from text.", provider="Groq", llm=extractor_llm)
 
                     extract_task = Task(description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}", agent=extractor_agent, expected_output="A structured list of merchants and their associated email addresses extracted from the given text.")
-
+                    
                     extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
                     extraction_results = extraction_crew.kickoff()
                     st.session_state.extraction_results = extraction_results if extraction_results else ""
-                    st.session_state.merchant_data = st.session_state.extraction_results
-                    
+                    st.session_state.merchant_data = extraction_results.raw if hasattr(extraction_results, 'raw') else None
+
                 except Exception as e:
                     st.error(f"Error executing query: {str(e)}")
         else:
             st.warning("⚠️ Please enter a query before clicking 'Run Query'.")
 
-# Show previous query results even if Generate Emails is clicked
-if st.session_state.raw_output:
-    st.markdown("### Query Results:", unsafe_allow_html=True)
-    st.write(st.session_state.raw_output)
+    # Display Query Results
+    if st.session_state.raw_output:
+        st.markdown("### Query Results:", unsafe_allow_html=True)
+        st.write(st.session_state.raw_output)
 
-if st.session_state.extraction_results:
-    st.markdown("### Extracted Merchants:", unsafe_allow_html=True)
-    if hasattr(st.session_state.extraction_results, 'raw'):
-        st.write(st.session_state.extraction_results.raw)
+    # Display Extracted Merchants
+    if st.session_state.merchant_data:
+        st.markdown("### Extracted Merchants:", unsafe_allow_html=True)
+        for merchant in st.session_state.merchant_data.split('\n'):
+            if merchant.strip():
+                st.write(merchant.strip())
 
 # Email Generator Button
 if st.session_state.merchant_data and (st.button("Generate Emails") or len(st.session_state.email_history) > 0):
     with st.spinner("Generating emails..."):
         try:
             llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
-            email_agent = Agent(role="Email Content Generator", goal="Generate personalized marketing emails for merchants.", backstory="You are a marketing expert named 'Sumit Uttamchandani' of Pulse iD fintech company skilled in crafting professional and engaging emails for merchants.", verbose=True, allow_delegation=False, llm=llm_email)
+            email_agent = Agent(role="Email Content Generator", goal="Generate personalized marketing emails for merchants.", backstory="You are a marketing expert named 'Sumit Uttamchandani' of Pulse iD fintech company skilled in crafting professional and engaging emails for merchants.", verbose=True)
 
             email_task_description = read_email_task_description(description_file_path)
             task = Task(description=email_task_description.format(merchant_data=st.session_state.merchant_data), agent=email_agent, expected_output="Marketing emails for each selected merchant.")
@@ -125,7 +126,6 @@ if st.session_state.merchant_data and (st.button("Generate Emails") or len(st.se
 
                 # Display all generated emails from history
                 for idx, email in enumerate(st.session_state.email_history):
-                    st.markdown(f"### Generated Email {idx + 1}:", unsafe_allow_html=True)
                     image_url_pattern = r'https?://[^\s]+'  # Regex to find image URLs in the email body.
                     urls_found = re.findall(image_url_pattern, email)
 
