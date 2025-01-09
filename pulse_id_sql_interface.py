@@ -43,6 +43,8 @@ if 'db_initialized' not in st.session_state:
     st.session_state.db_initialized = False  # Track if the database is initialized
 if 'selected_template' not in st.session_state:
     st.session_state.selected_template = "email_task_description1.txt"  # Default template
+if 'trigger_rerun' not in st.session_state:
+    st.session_state.trigger_rerun = False  # Track if a re-run is needed
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -156,6 +158,9 @@ def render_query_section():
                             "extraction_results": st.session_state.extraction_results
                         }
                     })
+                    
+                    # Trigger a re-run to update the UI
+                    st.session_state.trigger_rerun = True
                 
                 except Exception as e:
                     st.error(f"Error executing query: {str(e)}")
@@ -247,6 +252,11 @@ if st.session_state.merchant_data:
 
     # Render the "Enter Query" section below the "Generate Emails" button
     render_query_section()
+
+# Trigger a re-run if needed
+if st.session_state.trigger_rerun:
+    st.session_state.trigger_rerun = False  # Reset the trigger
+    st.experimental_rerun()  # Force a re-run of the script
 
 # Footer Section 
 st.markdown("---")
