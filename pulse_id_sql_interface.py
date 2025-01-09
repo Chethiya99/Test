@@ -38,11 +38,13 @@ if 'api_key' not in st.session_state:
 if 'interaction_history' not in st.session_state:
     st.session_state.interaction_history = []  # Store all interactions (queries, results, emails)
 if 'selected_db' not in st.session_state:
-    st.session_state.selected_db = "merchant_data_dubai.db"  # Default database
+    st.session_state.selected_db = "merchant_data.db"  # Default database
 if 'db_initialized' not in st.session_state:
     st.session_state.db_initialized = False  # Track if the database is initialized
 if 'selected_template' not in st.session_state:
     st.session_state.selected_template = "email_task_description1.txt"  # Default template
+if 'last_query' not in st.session_state:
+    st.session_state.last_query = ""  # Store the last query executed
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -76,7 +78,7 @@ if api_key:
     st.session_state.api_key = api_key
 
 # Database Selection
-db_options = ["merchant_data_dubai.db", "merchant_data_singapore.db"]
+db_options = ["merchant_data.db", "merchant_data_singapore.db"]
 new_selected_db = st.sidebar.selectbox("Select Database:", db_options, index=db_options.index(st.session_state.selected_db))
 
 # Check if the database selection has changed
@@ -119,6 +121,7 @@ def render_query_section():
     
     if st.button("Run Query", key=f"run_query_{len(st.session_state.interaction_history)}"):
         if user_query:
+            st.session_state.last_query = user_query  # Store the last query
             with st.spinner("Running query..."):
                 try:
                     # Execute the query using the agent
