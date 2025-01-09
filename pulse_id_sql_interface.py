@@ -45,6 +45,8 @@ if 'selected_template' not in st.session_state:
     st.session_state.selected_template = "email_task_description1.txt"  # Default template
 if 'last_query' not in st.session_state:
     st.session_state.last_query = ""  # Store the last query executed
+if 'query_submitted' not in st.session_state:
+    st.session_state.query_submitted = False  # Track if the query is submitted via Enter key
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -159,7 +161,7 @@ def execute_query(user_query):
             except Exception as e:
                 st.error(f"Error executing query: {str(e)}")
     else:
-        st.warning("⚠️ Please enter a query before pressing Enter.")
+        st.warning("⚠️ Please enter a query before submitting.")
 
 # Function to render the "Enter Query" section
 def render_query_section():
@@ -167,7 +169,7 @@ def render_query_section():
     user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.", key=f"query_{len(st.session_state.interaction_history)}")
     
     # Check if the Enter key is pressed
-    if st.session_state.get("query_submitted", False):
+    if st.session_state.query_submitted:
         execute_query(user_query)
         st.session_state.query_submitted = False  # Reset the flag
 
@@ -186,6 +188,10 @@ def render_query_section():
         """,
         unsafe_allow_html=True
     )
+
+    # Add a "Run Query" button
+    if st.button("Run Query", key=f"run_query_{len(st.session_state.interaction_history)}"):
+        execute_query(user_query)
 
 # Display Interaction History
 if st.session_state.interaction_history:
