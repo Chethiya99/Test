@@ -38,7 +38,7 @@ if 'api_key' not in st.session_state:
 if 'interaction_history' not in st.session_state:
     st.session_state.interaction_history = []  # Store all interactions (queries, results, emails)
 if 'selected_db' not in st.session_state:
-    st.session_state.selected_db = "merchant_data.db"  # Default database
+    st.session_state.selected_db = "merchant_data_dubai.db"  # Default database
 if 'db_initialized' not in st.session_state:
     st.session_state.db_initialized = False  # Track if the database is initialized
 if 'selected_template' not in st.session_state:
