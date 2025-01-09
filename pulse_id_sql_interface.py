@@ -35,6 +35,8 @@ if 'email_results' not in st.session_state:
     st.session_state.email_results = None
 if 'api_key' not in st.session_state:
     st.session_state.api_key = ""
+if 'query_history' not in st.session_state:
+    st.session_state.query_history = []
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -126,20 +128,30 @@ if st.session_state.db:
                     extraction_results = extraction_crew.kickoff()
                     st.session_state.extraction_results = extraction_results if extraction_results else ""
                     st.session_state.merchant_data = st.session_state.extraction_results
+                    
+                    # Append the query and results to the history
+                    st.session_state.query_history.append({
+                        "query": user_query,
+                        "raw_output": st.session_state.raw_output,
+                        "extraction_results": st.session_state.extraction_results
+                    })
                 
                 except Exception as e:
                     st.error(f"Error executing query: {str(e)}")
         else:
             st.warning("⚠️ Please enter a query before clicking 'Run Query'.")
 
-# Show previous query results even if Generate Emails is clicked 
-if st.session_state.raw_output:
-    st.markdown("### Query Results:", unsafe_allow_html=True)
-    st.write(st.session_state.raw_output)
-
-if st.session_state.extraction_results:
-    st.markdown("### Extracted Merchants:", unsafe_allow_html=True)
-    st.write(st.session_state.extraction_results.raw)
+# Display Query History
+if st.session_state.query_history:
+    st.markdown("### Query History:", unsafe_allow_html=True)
+    for idx, history in enumerate(st.session_state.query_history):
+        st.markdown(f"#### Query {idx + 1}: {history['query']}")
+        st.markdown("**Raw Output:**")
+        st.write(history['raw_output'])
+        if history['extraction_results']:
+            st.markdown("**Extracted Merchants:**")
+            st.write(history['extraction_results'].raw)
+        st.markdown("---")
 
 # Email Generator Button 
 if st.session_state.merchant_data and st.button("Generate Emails"):
