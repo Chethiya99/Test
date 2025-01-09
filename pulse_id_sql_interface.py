@@ -77,9 +77,10 @@ def execute_query(user_query):
         with st.spinner("Running query..."):
             try:
                 result = st.session_state.agent_executor.invoke(user_query)
+                # Store raw output for display purposes.
                 st.session_state.raw_output = result['output'] if isinstance(result, dict) else result
 
-                # Process raw output using an extraction agent
+                # Process raw output using an extraction agent.
                 extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
                 extractor_agent = Agent(role="Data Extractor", goal="Extract merchants and emails from the raw output.", backstory="You are an expert in extracting structured information from text.", provider="Groq", llm=extractor_llm)
 
@@ -88,28 +89,31 @@ def execute_query(user_query):
                 extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
                 extraction_results = extraction_crew.kickoff()
                 st.session_state.extraction_results = extraction_results if extraction_results else ""
-                st.session_state.merchant_data = st.session_state.extraction_results
+                st.session_state.merchant_data = extraction_results  # Store extracted merchant data.
 
             except Exception as e:
                 st.error(f"Error executing query: {str(e)}")
 
 # Query Input Section
 if st.session_state.db:
+    # Display Previous Results First
+    if st.session_state.raw_output:
+        st.markdown("### Previous Query Results:", unsafe_allow_html=True)
+        st.write(st.session_state.raw_output)
+
+    if st.session_state.extraction_results:
+        st.markdown("### Extracted Merchants:", unsafe_allow_html=True)
+        if hasattr(st.session_state.extraction_results, 'raw'):
+            # Display extracted merchant data.
+            st.write(st.session_state.extraction_results.raw)
+
+    # Ask for new query input.
     user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.", key="user_query")
     
     if st.button("Run Query", key="run_query"):
         execute_query(user_query)
 
-    # Show previous query results even if Generate Emails is clicked
-    if st.session_state.raw_output:
-        st.markdown("### Query Results:", unsafe_allow_html=True)
-        st.write(st.session_state.raw_output)
-    
-    if st.session_state.extraction_results:
-        st.markdown("### Extracted Merchants:", unsafe_allow_html=True)
-        st.write(st.session_state.extraction_results.raw)
-
-    # Email Generator Button
+    # Email Generator Button.
     if st.session_state.merchant_data and st.button("Generate Emails"):
         with st.spinner("Generating emails..."):
             try:
@@ -121,9 +125,10 @@ if st.session_state.db:
                 
                 crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
                 email_results = crew.kickoff()
+                # Store generated email results.
                 st.session_state.email_results = email_results
 
-                # Display results if email_results.raw exists
+                # Display results if email_results.raw exists.
                 if email_results.raw:
                     email_body = email_results.raw
 
@@ -136,7 +141,7 @@ if st.session_state.db:
 
                     if image_url:
                         modified_email_body = email_body.replace("Dear", f"Dear,<br><img src='{image_url}' style='max-width: 100%;' />")
-                        # Display the modified email with image
+                        # Display the modified email with image.
                         st.markdown(modified_email_body, unsafe_allow_html=True)
                     else:
                         # If no image URL found, just display the original email body.
@@ -154,12 +159,14 @@ if st.session_state.db:
 
         # After executing the next query, display all previous outputs again.
         if st.session_state.raw_output:
-            st.markdown("### Query Results:", unsafe_allow_html=True)
+            st.markdown("### Previous Query Results:", unsafe_allow_html=True)
             st.write(st.session_state.raw_output)
 
-        if st.session_state.extraction_results:
-            st.markdown("### Extracted Merchants:", unsafe_allow_html=True)
-            st.write(st.session_state.extraction_results.raw)
+        if hasattr(st.session_state.extraction_results, 'raw'):
+            # Display extracted merchant data again.
+            if isinstance(st.session_state.extraction_results.raw, str):
+                # If raw is a string (not a structured object).
+                st.write(st.session_state.extraction_results.raw)
 
 # Footer Section remains constant across interactions.
 st.markdown("---")
