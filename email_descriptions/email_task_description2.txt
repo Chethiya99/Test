@@ -6,7 +6,9 @@ Use the below format:
 
 Subject: Scale Your Success with Ready Customers
 
-Dear [Merchant Name],
+Dear 'merchant_name',
+'image url'
+
 
 HSBC has already achieved great success with programs like [e.g., HSBC I Love Dining]. Let us help you amplify these results and connect with even more ready-to-engage customers through Pulse iD.
 
@@ -22,7 +24,7 @@ Once onboarded, you’ll receive:
  A customized campaign plan built to meet your objectives.
  Insights and strategies for increasing customer engagement.
 
-Let’s make [Merchant Name] the top choice for our ready customer base.
+Let’s make 'merchant_name' the top choice for our ready customer base.
 
 Best Regards,
 Emily Harper
