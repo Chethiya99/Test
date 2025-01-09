@@ -73,7 +73,7 @@ if api_key:
     st.session_state.api_key = api_key
 
 # Database Path Input
-db_path = st.sidebar.text_input("Database Path:", "merchant_data.db")
+db_path = st.sidebar.text_input("Database Path:", "merchant_data_singapore.db")
 model_name = st.sidebar.selectbox("Select Model:", ["llama3-70b-8192", "llama-3.1-70b-versatile"])
 
 # Initialize SQL Database and Agent
