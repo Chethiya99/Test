@@ -94,9 +94,8 @@ def execute_query(user_query):
             except Exception as e:
                 st.error(f"Error executing query: {str(e)}")
 
-# Query Input Section
-if st.session_state.db:
-    # Display Previous Results First
+# Display Previous Results First (if any)
+if st.session_state.raw_output or st.session_state.email_results:
     if st.session_state.raw_output:
         st.markdown("### Previous Query Results:", unsafe_allow_html=True)
         st.write(st.session_state.raw_output)
@@ -107,57 +106,79 @@ if st.session_state.db:
             # Display extracted merchant data.
             st.write(st.session_state.extraction_results.raw)
 
-    # Ask for new query input.
-    user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.", key="user_query")
-    
-    if st.button("Run Query", key="run_query"):
-        execute_query(user_query)
+    if st.session_state.email_results:
+        st.markdown("### Generated Emails:", unsafe_allow_html=True)
+        if hasattr(st.session_state.email_results, 'raw'):
+            # Display generated email results.
+            email_body = st.session_state.email_results.raw
+            
+            def extract_image_url(email_body):
+                url_pattern = r'https?://[^\s]+'
+                urls = re.findall(url_pattern, email_body)
+                return urls[0] if urls else None
 
-    # Email Generator Button.
-    if st.session_state.merchant_data and st.button("Generate Emails"):
-        with st.spinner("Generating emails..."):
-            try:
-                llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
-                email_agent = Agent(role="Email Content Generator", goal="Generate personalized marketing emails for merchants.", backstory="You are a marketing expert named 'Sumit Uttamchandani' of Pulse iD fintech company skilled in crafting professional and engaging emails for merchants.", verbose=True, allow_delegation=False, llm=llm_email)
+            image_url = extract_image_url(email_body)
 
-                email_task_description = read_email_task_description(description_file_path)
-                task = Task(description=email_task_description.format(merchant_data=st.session_state.merchant_data), agent=email_agent, expected_output="Marketing emails for each selected merchant, tailored to their business details.")
-                
-                crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
-                email_results = crew.kickoff()
-                # Store generated email results.
-                st.session_state.email_results = email_results
+            if image_url:
+                modified_email_body = email_body.replace("Dear", f"Dear,<br><img src='{image_url}' style='max-width: 100%;' />")
+                # Display the modified email with image.
+                st.markdown(modified_email_body, unsafe_allow_html=True)
+            else:
+                # If no image URL found, just display the original email body.
+                st.markdown(email_body, unsafe_allow_html=True)
 
-                # Display results if email_results.raw exists.
-                if email_results.raw:
-                    email_body = email_results.raw
+# Ask for new query input.
+user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.", key="user_query")
 
-                    def extract_image_url(email_body):
-                        url_pattern = r'https?://[^\s]+'
-                        urls = re.findall(url_pattern, email_body)
-                        return urls[0] if urls else None
+if st.button("Run Query", key="run_query"):
+    execute_query(user_query)
 
-                    image_url = extract_image_url(email_body)
+# Email Generator Button.
+if st.session_state.merchant_data and st.button("Generate Emails"):
+    with st.spinner("Generating emails..."):
+        try:
+            llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
+            email_agent = Agent(role="Email Content Generator", goal="Generate personalized marketing emails for merchants.", backstory="You are a marketing expert named 'Sumit Uttamchandani' of Pulse iD fintech company skilled in crafting professional and engaging emails for merchants.", verbose=True, allow_delegation=False, llm=llm_email)
 
-                    if image_url:
-                        modified_email_body = email_body.replace("Dear", f"Dear,<br><img src='{image_url}' style='max-width: 100%;' />")
-                        # Display the modified email with image.
-                        st.markdown(modified_email_body, unsafe_allow_html=True)
-                    else:
-                        # If no image URL found, just display the original email body.
-                        st.markdown(email_body, unsafe_allow_html=True)
+            email_task_description = read_email_task_description(description_file_path)
+            task = Task(description=email_task_description.format(merchant_data=st.session_state.merchant_data), agent=email_agent, expected_output="Marketing emails for each selected merchant, tailored to their business details.")
+            
+            crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
+            email_results = crew.kickoff()
+            # Store generated email results.
+            st.session_state.email_results = email_results
 
-            except Exception as e:
-                st.error(f"Error generating emails: {str(e)}")
+            # Display results if email_results.raw exists.
+            if email_results.raw:
+                email_body = email_results.raw
 
-    # Input for Next Question below generated emails results.
-    next_question_input = st.text_area("Enter your next question:", placeholder="E.g., What are the latest updates on merchants?", key="next_question")
-    
-    # Add Run Next Query button below next question input.
-    if next_question_input and st.button("Run Next Query", key="run_next_query"):
-        execute_query(next_question_input)  # Call the same function to execute the new query.
+                def extract_image_url(email_body):
+                    url_pattern = r'https?://[^\s]+'
+                    urls = re.findall(url_pattern, email_body)
+                    return urls[0] if urls else None
 
-        # After executing the next query, display all previous outputs again.
+                image_url = extract_image_url(email_body)
+
+                if image_url:
+                    modified_email_body = email_body.replace("Dear", f"Dear,<br><img src='{image_url}' style='max-width: 100%;' />")
+                    # Display the modified email with image.
+                    st.markdown(modified_email_body, unsafe_allow_html=True)
+                else:
+                    # If no image URL found, just display the original email body.
+                    st.markdown(email_body, unsafe_allow_html=True)
+
+        except Exception as e:
+            st.error(f"Error generating emails: {str(e)}")
+
+# Input for Next Question below generated emails results.
+next_question_input = st.text_area("Enter your next question:", placeholder="E.g., What are the latest updates on merchants?", key="next_question")
+
+# Add Run Next Query button below next question input.
+if next_question_input and st.button("Run Next Query", key="run_next_query"):
+    execute_query(next_question_input)  # Call the same function to execute the new query.
+
+    # After executing the next query, display all previous outputs again.
+    if st.session_state.raw_output or (st.session_state.email_results and hasattr(st.session_state.email_results, 'raw')):
         if st.session_state.raw_output:
             st.markdown("### Previous Query Results:", unsafe_allow_html=True)
             st.write(st.session_state.raw_output)
@@ -167,6 +188,25 @@ if st.session_state.db:
             if isinstance(st.session_state.extraction_results.raw, str):
                 # If raw is a string (not a structured object).
                 st.write(st.session_state.extraction_results.raw)
+
+        if hasattr(st.session_state.email_results, 'raw'):
+            # Display generated email results again.
+            email_body_next_query = st.session_state.email_results.raw
+            
+            def extract_image_url(email_body):
+                url_pattern = r'https?://[^\s]+'
+                urls = re.findall(url_pattern, email_body)
+                return urls[0] if urls else None
+
+            image_url_next_query = extract_image_url(email_body_next_query)
+
+            if image_url_next_query:
+                modified_email_body_next_query = email_body_next_query.replace("Dear", f"Dear,<br><img src='{image_url_next_query}' style='max-width: 100%;' />")
+                # Display the modified email with image.
+                st.markdown(modified_email_body_next_query, unsafe_allow_html=True)
+            else:
+                # If no image URL found, just display the original email body.
+                st.markdown(email_body_next_query, unsafe_allow_html=True)
 
 # Footer Section remains constant across interactions.
 st.markdown("---")
