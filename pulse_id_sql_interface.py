@@ -35,8 +35,8 @@ if 'email_results' not in st.session_state:
     st.session_state.email_results = None
 if 'api_key' not in st.session_state:
     st.session_state.api_key = ""
-if 'query_history' not in st.session_state:
-    st.session_state.query_history = []
+if 'interaction_history' not in st.session_state:
+    st.session_state.interaction_history = []  # Store all interactions (queries, results, emails)
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -129,11 +129,14 @@ if st.session_state.db:
                     st.session_state.extraction_results = extraction_results if extraction_results else ""
                     st.session_state.merchant_data = st.session_state.extraction_results
                     
-                    # Append the query and results to the history
-                    st.session_state.query_history.append({
-                        "query": user_query,
-                        "raw_output": st.session_state.raw_output,
-                        "extraction_results": st.session_state.extraction_results
+                    # Append the query and results to the interaction history
+                    st.session_state.interaction_history.append({
+                        "type": "query",
+                        "content": {
+                            "query": user_query,
+                            "raw_output": st.session_state.raw_output,
+                            "extraction_results": st.session_state.extraction_results
+                        }
                     })
                 
                 except Exception as e:
@@ -141,16 +144,20 @@ if st.session_state.db:
         else:
             st.warning("⚠️ Please enter a query before clicking 'Run Query'.")
 
-# Display Query History
-if st.session_state.query_history:
-    st.markdown("### Query History:", unsafe_allow_html=True)
-    for idx, history in enumerate(st.session_state.query_history):
-        st.markdown(f"#### Query {idx + 1}: {history['query']}")
-        st.markdown("**Raw Output:**")
-        st.write(history['raw_output'])
-        if history['extraction_results']:
-            st.markdown("**Extracted Merchants:**")
-            st.write(history['extraction_results'].raw)
+# Display Interaction History
+if st.session_state.interaction_history:
+    st.markdown("### Interaction History:", unsafe_allow_html=True)
+    for interaction in st.session_state.interaction_history:
+        if interaction["type"] == "query":
+            st.markdown(f"#### Query: {interaction['content']['query']}")
+            st.markdown("**Raw Output:**")
+            st.write(interaction['content']['raw_output'])
+            if interaction['content']['extraction_results']:
+                st.markdown("**Extracted Merchants:**")
+                st.write(interaction['content']['extraction_results'].raw)
+        elif interaction["type"] == "email":
+            st.markdown("#### Generated Email:")
+            st.markdown(interaction['content'], unsafe_allow_html=True)
         st.markdown("---")
 
 # Email Generator Button 
@@ -199,12 +206,16 @@ if st.session_state.merchant_data and st.button("Generate Emails"):
                 # Insert image into the email body at a specific position (after "Dear Merchant Name")
                 if image_url:
                     modified_email_body = email_body.replace("Dear", f"Dear,<br><img src='{image_url}' style='max-width: 100%;' />")
-                    
-                    # Display the modified email with image
-                    st.markdown(modified_email_body, unsafe_allow_html=True)
-                else:
-                    # If no image URL found, just display the original email body.
-                    st.markdown(email_body, unsafe_allow_html=True)
+                    email_body = modified_email_body
+                
+                # Append the generated email to the interaction history
+                st.session_state.interaction_history.append({
+                    "type": "email",
+                    "content": email_body
+                })
+                
+                # Display the email
+                st.markdown(email_body, unsafe_allow_html=True)
 
         except Exception as e:
             st.error(f"Error generating emails: {str(e)}")
