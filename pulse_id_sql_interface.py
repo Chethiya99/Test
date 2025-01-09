@@ -152,6 +152,15 @@ if st.session_state.db:
     if next_question_input and st.button("Run Next Query", key="run_next_query"):
         execute_query(next_question_input)  # Call the same function to execute the new query.
 
+        # After executing the next query, display all previous outputs again.
+        if st.session_state.raw_output:
+            st.markdown("### Query Results:", unsafe_allow_html=True)
+            st.write(st.session_state.raw_output)
+
+        if st.session_state.extraction_results:
+            st.markdown("### Extracted Merchants:", unsafe_allow_html=True)
+            st.write(st.session_state.extraction_results.raw)
+
 # Footer Section remains constant across interactions.
 st.markdown("---")
 st.markdown("<div style='text-align: center; font-size: 14px;'>Powered by <strong>Pulse iD</strong> | Built with 🐍 Python and Streamlit</div>", unsafe_allow_html=True)
