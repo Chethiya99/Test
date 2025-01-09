@@ -22,7 +22,7 @@ st.set_page_config(
 
 # Initialize session state
 if 'history' not in st.session_state:
-    st.session_state.history = []  # Store previous results as a list of dictionaries
+    st.session_state.history = []
 if 'db' not in st.session_state:
     st.session_state.db = None
 if 'agent_executor' not in st.session_state:
@@ -30,35 +30,32 @@ if 'agent_executor' not in st.session_state:
 if 'api_key' not in st.session_state:
     st.session_state.api_key = ""
 
-# Function to read the email task description from a text file
+# Helper Functions
+def get_api_key():
+    """Prompt user for API key in the sidebar."""
+    return st.sidebar.text_input("Enter Your API Key:", type="password")
+
 def read_email_task_description(file_path):
+    """Read the email task description from a text file."""
     if os.path.exists(file_path):
         with open(file_path, 'r') as file:
             return file.read()
     else:
         raise FileNotFoundError(f"The file {file_path} does not exist.")
 
-# Header Section with Title and Logo
-st.image("logo.png", width=150)  # Ensure you have your logo in the working directory
-st.markdown(
-    "<h1 style='text-align: center; color: #4CAF50;'>📊 Pulse iD - SQL Database Query Interface</h1>",
-    unsafe_allow_html=True
-)
-st.markdown(
-    "<h4 style='text-align: center; color: #555;'>Interact with your merchant database and generate emails with ease!</h4>",
-    unsafe_allow_html=True
-)
-
 # Sidebar Configuration
 st.sidebar.header("Settings")
-api_key = st.sidebar.text_input("Enter Your API Key:", type="password")
+api_key = get_api_key()
+if api_key:
+    st.session_state.api_key = api_key
+
 db_path = st.sidebar.text_input("Database Path:", "merchant_data.db")
 model_name = st.sidebar.selectbox("Select Model:", ["llama3-70b-8192", "llama-3.1-70b-versatile"])
 
-# Initialize SQL Database and Agent
+# Database and Agent Initialization
 if db_path and api_key and not st.session_state.db:
     try:
-        llm = ChatGroq(temperature=0, model_name=model_name, api_key=api_key)
+        llm = ChatGroq(temperature=0, model_name=model_name, api_key=st.session_state.api_key)
         st.session_state.db = SQLDatabase.from_uri(f"sqlite:///{db_path}", sample_rows_in_table_info=3)
         st.session_state.agent_executor = create_sql_agent(
             llm=llm,
@@ -70,82 +67,81 @@ if db_path and api_key and not st.session_state.db:
     except Exception as e:
         st.sidebar.error(f"Error: {str(e)}")
 
-# Query Input Section
+# Main Section
+st.image("logo.png", width=150)
+st.markdown("<h1 style='text-align: center;'>📊 Pulse iD - SQL Database Query Interface</h1>", unsafe_allow_html=True)
+
 if st.session_state.db:
-    st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
+    st.markdown("### Ask questions about your database:")
     user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.")
 
-    if st.button("Run Query", key="run_query"):
+    if st.button("Run Query"):
         if user_query:
-            with st.spinner("Running query..."):
-                try:
-                    # Execute the query using the agent
-                    result = st.session_state.agent_executor.invoke(user_query)
-                    raw_output = result['output'] if isinstance(result, dict) else result
-                    
-                    # Extract structured information
-                    extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=api_key)
-                    extractor_agent = Agent(
-                        role="Data Extractor",
-                        goal="Extract merchants and emails from the raw output.",
-                        backstory="You are an expert in extracting structured information from text.",
-                        provider="Groq",
-                        llm=extractor_llm
-                    )
-                    extract_task = Task(
-                        description=f"Extract a list of 'merchants' and their 'emails' from the following text:\n\n{raw_output}",
-                        agent=extractor_agent
-                    )
-                    extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
-                    extraction_results = extraction_crew.kickoff()
-
-                    # Store result in history
-                    st.session_state.history.append({
-                        "query": user_query,
-                        "raw_output": raw_output,
-                        "extraction_results": extraction_results
-                    })
-                except Exception as e:
-                    st.error(f"Error executing query: {str(e)}")
-        else:
-            st.warning("⚠️ Please enter a query before clicking 'Run Query'.")
-
-# Display History of Queries and Results
-for idx, record in enumerate(st.session_state.history):
-    st.markdown(f"### Query {idx + 1}:")
-    st.text(f"Query: {record['query']}")
-    st.markdown("**Raw Output:**")
-    st.write(record['raw_output'])
-
-    if record.get('extraction_results'):
-        st.markdown("**Extracted Merchants:**")
-        st.write(record['extraction_results'].raw)
-
-    # Email Generator Section
-    if st.button(f"Generate Emails for Query {idx + 1}", key=f"generate_emails_{idx}"):
-        with st.spinner("Generating emails..."):
             try:
-                email_task_description = read_email_task_description('email_descriptions/email_task_description.txt')
-                email_agent = Agent(
-                    role="Email Content Generator",
-                    goal="Generate personalized marketing emails for merchants.",
-                    backstory="You are a marketing expert named 'Sumit Uttamchandani' of Pulse iD.",
+                result = st.session_state.agent_executor.invoke(user_query)
+                raw_output = result['output'] if isinstance(result, dict) else result
+
+                # Extract merchant data
+                extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
+                extractor_agent = Agent(
+                    role="Data Extractor",
+                    goal="Extract merchants and emails from the raw output.",
+                    provider="Groq",
                     llm=extractor_llm
                 )
-                task = Task(
-                    description=email_task_description.format(merchant_data=record['extraction_results']),
-                    agent=email_agent
+                extraction_task = Task(
+                    description=f"Extract merchants and emails from:\n\n{raw_output}",
+                    agent=extractor_agent,
+                    expected_output="A structured list of merchants and emails."
                 )
-                crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
-                email_results = crew.kickoff()
-                st.markdown("**Generated Emails:**")
-                st.write(email_results.raw)
-            except Exception as e:
-                st.error(f"Error generating emails: {str(e)}")
+                extraction_crew = Crew(agents=[extractor_agent], tasks=[extraction_task], process=Process.sequential)
+                extraction_results = extraction_crew.kickoff()
 
-# Footer Section
-st.markdown("---")
-st.markdown(
-    "<div style='text-align: center; font-size: 14px;'>Powered by <strong>Pulse iD</strong> | Built with 🐍 Python and Streamlit</div>",
-    unsafe_allow_html=True
-)
+                # Save to history
+                st.session_state.history.append({
+                    "query": user_query,
+                    "raw_output": raw_output,
+                    "extraction": extraction_results.raw if extraction_results else ""
+                })
+            except Exception as e:
+                st.error(f"Error executing query: {str(e)}")
+        else:
+            st.warning("Please enter a query.")
+
+# Display History
+for idx, interaction in enumerate(st.session_state.history):
+    st.markdown(f"### Interaction #{idx + 1}")
+    st.markdown("**Query:**")
+    st.write(interaction["query"])
+    st.markdown("**Query Result:**")
+    st.write(interaction["raw_output"])
+    st.markdown("**Extracted Merchants:**")
+    st.write(interaction["extraction"])
+
+# Email Generation
+if st.button("Generate Emails"):
+    if st.session_state.history:
+        last_interaction = st.session_state.history[-1]
+        merchant_data = last_interaction.get("extraction", "")
+
+        try:
+            email_task_description = read_email_task_description("email_descriptions/email_task_description.txt")
+            llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
+            email_agent = Agent(
+                role="Email Generator",
+                goal="Generate emails for merchants.",
+                llm=llm_email
+            )
+            email_task = Task(
+                description=email_task_description.format(merchant_data=merchant_data),
+                agent=email_agent,
+                expected_output="Personalized emails for merchants."
+            )
+            email_crew = Crew(agents=[email_agent], tasks=[email_task], process=Process.sequential)
+            email_results = email_crew.kickoff()
+            
+            if email_results.raw:
+                st.markdown("### Generated Emails:")
+                st.markdown(email_results.raw, unsafe_allow_html=True)
+        except Exception as e:
+            st.error(f"Error generating emails: {str(e)}")
