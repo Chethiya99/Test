@@ -145,6 +145,19 @@ if st.session_state.db:
 
     # Input for Next Question below generated emails results.
     next_question_input = st.text_area("Enter your next question:", placeholder="E.g., What are the latest updates on merchants?", key="next_question")
+    
+    # Add Run Query button below next question input.
+    if next_question_input and st.button("Run Next Query", key="run_next_query"):
+        user_query = next_question_input  # Assign new query to user_query variable.
+        if user_query:
+            with st.spinner("Running next query..."):
+                try:
+                    result_next_query = st.session_state.agent_executor.invoke(user_query)
+                    # Handle result processing similar to above...
+                    # (You can repeat the processing logic here or refactor it into a function if needed.)
+                    
+                except Exception as e:
+                    st.error(f"Error executing next query: {str(e)}")
 
 # Footer Section remains constant across interactions.
 st.markdown("---")
