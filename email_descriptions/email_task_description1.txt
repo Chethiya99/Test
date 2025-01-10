@@ -23,8 +23,10 @@ To give you an example, XYZ Coffee in Dubai partnered with us to offer a 15% dis
 **Next Steps**: Complete our quick onboarding form here: [CTA Link – Merchant Onboarding Form]. This will help us set up your account and customize your campaign.
 
 If you have any questions or would like to explore offer options, feel free to reach out—I’d be happy to assist!
-'image url'
+'image url',
+
 Kind Regards,
+
 Also randomly select three case studeis among below and add to the email body:
 01.Zions Bank's Merchant-Funded Rewards Program 
 ● Overview: Zions Bank implemented a merchant-funded rewards program designed by 
