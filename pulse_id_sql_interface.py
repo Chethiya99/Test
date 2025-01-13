@@ -186,12 +186,8 @@ if st.session_state.interaction_history:
         
         st.markdown("---")
 
-# Initial "Enter Query" section (if no interactions yet)
-if not st.session_state.interaction_history:
-    render_query_section()
-
 # Email Generator Button and Continue Querying Button
-if st.session_state.merchant_data and not st.session_state.show_continue_button:
+if st.session_state.merchant_data:  # Show buttons if merchant data is available
     col1, col2 = st.columns(2)
     
     with col1:
@@ -270,7 +266,7 @@ if st.session_state.show_continue_button:
         st.session_state.trigger_rerun = True  # Trigger a re-run to reset the query section
 
 # Render the query section after clicking "Continue Asking Questions" or "Continue Querying"
-if st.session_state.show_continue_button or st.session_state.trigger_rerun:
+if st.session_state.show_continue_button or st.session_state.trigger_rerun or not st.session_state.interaction_history:
     render_query_section()
 
 # Trigger a re-run if needed
