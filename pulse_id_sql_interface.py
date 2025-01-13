@@ -1,6 +1,7 @@
 __import__('pysqlite3')
 import sys
 import os
+import time  # Import time module for unique key generation
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 import re
 import pandas as pd
@@ -122,8 +123,8 @@ if st.session_state.selected_db and api_key and not st.session_state.db_initiali
 def render_query_section():
     st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
     
-    # Generate a unique key for the text_area widget
-    unique_key = f"query_{len(st.session_state.interaction_history)}_{st.session_state.query_counter}"
+    # Generate a unique key for the text_area widget using a timestamp
+    unique_key = f"query_{len(st.session_state.interaction_history)}_{time.time()}"
     
     user_query = st.text_area(
         "Enter your query:",
