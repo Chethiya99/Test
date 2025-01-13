@@ -99,12 +99,12 @@ st.sidebar.success(f"✅ Selected Template: {st.session_state.selected_template}
 if st.session_state.selected_db and api_key and not st.session_state.db_initialized:
     try:
         # Initialize Groq LLM
-        st.session_state.llm = ChatGroq(temperature=0, model_name=model_name, api_key=st.session_state.api_key)
+        llm = ChatGroq(temperature=0, model_name=model_name, api_key=st.session_state.api_key)
         # Initialize SQLDatabase
         st.session_state.db = SQLDatabase.from_uri(f"sqlite:///{st.session_state.selected_db}", sample_rows_in_table_info=3)
         # Create SQL Agent
         st.session_state.agent_executor = create_sql_agent(
-            llm=st.session_state.llm,
+            llm=llm,
             db=st.session_state.db,
             agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
             verbose=True
@@ -113,16 +113,6 @@ if st.session_state.selected_db and api_key and not st.session_state.db_initiali
         st.sidebar.success("✅ Database and LLM Connected Successfully!")
     except Exception as e:
         st.sidebar.error(f"Error: {str(e)}")
-
-# Function to handle general questions using the LLM
-def handle_general_questions(user_query, llm):
-    """Use the LLM to generate a response for general questions."""
-    try:
-        # Use the same LLM instance to generate a response
-        response = llm.invoke(f"You are the Marketing Agent of Pulse iD, a Fintech company. Respond to the following question in a professional and friendly tone: {user_query}")
-        return response.content if hasattr(response, 'content') else response
-    except Exception as e:
-        return f"Error generating response: {str(e)}"
 
 # Function to render the "Enter Query" section
 def render_query_section():
@@ -133,64 +123,44 @@ def render_query_section():
         if user_query:
             with st.spinner("Running query..."):
                 try:
-                    # Check if the query is a general question
-                    if any(keyword in user_query.lower() for keyword in ["who are you", "what is your name", "what do you do", "what is pulse id", "tell me about yourself"]):
-                        general_response = handle_general_questions(user_query, st.session_state.llm)
-                        st.session_state.raw_output = general_response
-                        st.session_state.extraction_results = None
-                        st.session_state.merchant_data = None
-                        
-                        # Append the query and response to the interaction history
-                        st.session_state.interaction_history.append({
-                            "type": "query",
-                            "content": {
-                                "query": user_query,
-                                "raw_output": general_response,
-                                "extraction_results": None
-                            }
-                        })
-                        
-                        # Trigger a re-run to update the UI
-                        st.session_state.trigger_rerun = True
-                    else:
-                        # Execute the query using the agent
-                        result = st.session_state.agent_executor.invoke(user_query)
-                        st.session_state.raw_output = result['output'] if isinstance(result, dict) else result
-                        
-                        # Process raw output using an extraction agent 
-                        extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
-                        extractor_agent = Agent(
-                            role="Data Extractor",
-                            goal="Extract merchants and emails from the raw output.",
-                            backstory="You are an expert in extracting structured information from text.",
-                            provider="Groq",
-                            llm=extractor_llm 
-                        )
-                        
-                        extract_task = Task(
-                            description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
-                            agent=extractor_agent,
-                            expected_output="A structured list of merchants and their associated email addresses extracted from the given text."
-                        )
-                        
-                        # Crew execution for extraction 
-                        extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
-                        extraction_results = extraction_crew.kickoff()
-                        st.session_state.extraction_results = extraction_results if extraction_results else ""
-                        st.session_state.merchant_data = st.session_state.extraction_results
-                        
-                        # Append the query and results to the interaction history
-                        st.session_state.interaction_history.append({
-                            "type": "query",
-                            "content": {
-                                "query": user_query,
-                                "raw_output": st.session_state.raw_output,
-                                "extraction_results": st.session_state.extraction_results
-                            }
-                        })
-                        
-                        # Trigger a re-run to update the UI
-                        st.session_state.trigger_rerun = True
+                    # Execute the query using the agent
+                    result = st.session_state.agent_executor.invoke(user_query)
+                    st.session_state.raw_output = result['output'] if isinstance(result, dict) else result
+                    
+                    # Process raw output using an extraction agent 
+                    extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
+                    extractor_agent = Agent(
+                        role="Data Extractor",
+                        goal="Extract merchants and emails from the raw output.",
+                        backstory="You are an expert in extracting structured information from text.",
+                        provider="Groq",
+                        llm=extractor_llm 
+                    )
+                    
+                    extract_task = Task(
+                        description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
+                        agent=extractor_agent,
+                        expected_output="A structured list of merchants and their associated email addresses extracted from the given text."
+                    )
+                    
+                    # Crew execution for extraction 
+                    extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
+                    extraction_results = extraction_crew.kickoff()
+                    st.session_state.extraction_results = extraction_results if extraction_results else ""
+                    st.session_state.merchant_data = st.session_state.extraction_results
+                    
+                    # Append the query and results to the interaction history
+                    st.session_state.interaction_history.append({
+                        "type": "query",
+                        "content": {
+                            "query": user_query,
+                            "raw_output": st.session_state.raw_output,
+                            "extraction_results": st.session_state.extraction_results
+                        }
+                    })
+                    
+                    # Trigger a re-run to update the UI
+                    st.session_state.trigger_rerun = True
                 
                 except Exception as e:
                     st.error(f"Error executing query: {str(e)}")
