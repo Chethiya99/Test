@@ -191,7 +191,7 @@ if not st.session_state.interaction_history:
     render_query_section()
 
 # Email Generator Button 
-if st.session_state.merchant_data:
+if st.session_state.merchant_data and not st.session_state.continue_query:
     if st.button("Generate Emails", key="generate_emails"):
         with st.spinner("Generating emails..."):
             try:
@@ -252,13 +252,14 @@ if st.session_state.merchant_data:
                     # Ask the user if they want to continue
                     if st.button("Continue", key="continue_button"):
                         st.session_state.continue_query = True  # Set a flag to show the next query section
+                        st.session_state.trigger_rerun = True  # Trigger a re-run to refresh the UI
 
             except Exception as e:
                 st.error(f"Error generating emails: {str(e)}")
 
-    # Render the "Enter Query" section below the "Generate Emails" button if the user chooses to continue
-    if st.session_state.get("continue_query", False):
-        render_query_section()
+# Render the "Enter Query" section if the user chooses to continue
+if st.session_state.get("continue_query", False):
+    render_query_section()
 
 # Trigger a re-run if needed
 if st.session_state.trigger_rerun:
