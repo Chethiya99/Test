@@ -131,7 +131,7 @@ def render_query_section():
                     extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
                     extractor_agent = Agent(
                         role="Data Extractor",
-                        goal="Extract merchants and emails from the raw output.",
+                        goal="Extract merchants, emails from the raw output if they are only available.",
                         backstory="You are an expert in extracting structured information from text.",
                         provider="Groq",
                         llm=extractor_llm 
@@ -140,7 +140,7 @@ def render_query_section():
                     extract_task = Task(
                         description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
                         agent=extractor_agent,
-                        expected_output="A structured list of merchants and their associated email addresses extracted from the given text."
+                        expected_output="A structured list of merchants, their associated email addresses extracted from the given text. please dont output any text if they are not available."
                     )
                     
                     # Crew execution for extraction 
