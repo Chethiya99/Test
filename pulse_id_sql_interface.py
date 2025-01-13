@@ -38,7 +38,7 @@ if 'api_key' not in st.session_state:
 if 'interaction_history' not in st.session_state:
     st.session_state.interaction_history = []  # Store all interactions (queries, results, emails)
 if 'selected_db' not in st.session_state:
-    st.session_state.selected_db = "merchant_data_dubai.db"  # Default database
+    st.session_state.selected_db = "merchant_data_singapore.db"  # Default database
 if 'db_initialized' not in st.session_state:
     st.session_state.db_initialized = False  # Track if the database is initialized
 if 'selected_template' not in st.session_state:
@@ -179,7 +179,7 @@ if st.session_state.interaction_history:
                 st.markdown("**Extracted Merchants:**")
                 st.write(interaction['content']['extraction_results'].raw)
         elif interaction["type"] == "email":
-            st.markdown("#### Generated Email:")
+            st.markdown("#### Generated Email For Above Extracted Merchants:")
             st.markdown(interaction['content'], unsafe_allow_html=True)
         
         st.markdown("---")
