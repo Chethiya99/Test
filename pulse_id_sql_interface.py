@@ -179,7 +179,7 @@ if st.session_state.interaction_history:
                 st.markdown("**Extracted Merchants:**")
                 st.write(interaction['content']['extraction_results'].raw)
         elif interaction["type"] == "email":
-            st.markdown("#### Generated Email For Above Extracted Merchants:")
+            st.markdown("#### Generated Email:")
             st.markdown(interaction['content'], unsafe_allow_html=True)
         
         st.markdown("---")
@@ -190,7 +190,7 @@ if not st.session_state.interaction_history:
 
 # Email Generator Button 
 if st.session_state.merchant_data:
-    if st.button("Generate Emails", key="generate_emails"):
+    if st.button("Generate Emails For Above Extracted Merchants", key="generate_emails"):
         with st.spinner("Generating emails..."):
             try:
                 # Define email generation agent 
