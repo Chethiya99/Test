@@ -114,19 +114,6 @@ if st.session_state.selected_db and api_key and not st.session_state.db_initiali
     except Exception as e:
         st.sidebar.error(f"Error: {str(e)}")
 
-# Function to check if the query is general or database-related
-def is_general_query(query):
-    general_keywords = ["who are you", "what is your purpose", "tell me about", "what can you do", "help", "hi", "hello"]
-    return any(keyword in query.lower() for keyword in general_keywords)
-
-# Function to generate a marketing-oriented response
-def generate_marketing_response():
-    return """
-    Hello! I am the marketing agent of Pulse iD, a leading fintech company specializing in innovative payment solutions and merchant services. 
-    My purpose is to assist you in querying your merchant database and generating personalized marketing emails to engage with your merchants effectively.
-    Feel free to ask me anything about your database or request assistance in crafting compelling email campaigns!
-    """
-
 # Function to render the "Enter Query" section
 def render_query_section():
     st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
@@ -136,45 +123,16 @@ def render_query_section():
         if user_query:
             with st.spinner("Running query..."):
                 try:
-                    if is_general_query(user_query):
-                        # Generate a marketing-oriented response for general questions
-                        marketing_response = generate_marketing_response()
-                        st.session_state.raw_output = marketing_response
-                        st.session_state.extraction_results = None
-                    else:
-                        # Execute the query using the agent
-                        result = st.session_state.agent_executor.invoke(user_query)
-                        st.session_state.raw_output = result['output'] if isinstance(result, dict) else result
-                        
-                        # Process raw output using an extraction agent 
-                        extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
-                        extractor_agent = Agent(
-                            role="Data Extractor",
-                            goal="Extract merchants and emails from the raw output.",
-                            backstory="You are an expert in extracting structured information from text.",
-                            provider="Groq",
-                            llm=extractor_llm 
-                        )
-                        
-                        extract_task = Task(
-                            description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
-                            agent=extractor_agent,
-                            expected_output="A structured list of merchants and their associated email addresses extracted from the given text."
-                        )
-                        
-                        # Crew execution for extraction 
-                        extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
-                        extraction_results = extraction_crew.kickoff()
-                        st.session_state.extraction_results = extraction_results if extraction_results else ""
-                        st.session_state.merchant_data = st.session_state.extraction_results
+                    # Pass the query to the SQL agent
+                    result = st.session_state.agent_executor.invoke(user_query)
+                    st.session_state.raw_output = result['output'] if isinstance(result, dict) else result
                     
                     # Append the query and results to the interaction history
                     st.session_state.interaction_history.append({
                         "type": "query",
                         "content": {
                             "query": user_query,
-                            "raw_output": st.session_state.raw_output,
-                            "extraction_results": st.session_state.extraction_results
+                            "raw_output": st.session_state.raw_output
                         }
                     })
                     
@@ -194,9 +152,6 @@ if st.session_state.interaction_history:
             st.markdown(f"#### Query: {interaction['content']['query']}")
             st.markdown("**Raw Output:**")
             st.write(interaction['content']['raw_output'])
-            if interaction['content']['extraction_results']:
-                st.markdown("**Extracted Merchants:**")
-                st.write(interaction['content']['extraction_results'].raw)
         elif interaction["type"] == "email":
             st.markdown("#### Generated Email:")
             st.markdown(interaction['content'], unsafe_allow_html=True)
