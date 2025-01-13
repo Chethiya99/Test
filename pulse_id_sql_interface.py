@@ -43,8 +43,10 @@ if 'db_initialized' not in st.session_state:
     st.session_state.db_initialized = False  # Track if the database is initialized
 if 'selected_template' not in st.session_state:
     st.session_state.selected_template = "email_task_description1.txt"  # Default template
+if 'trigger_rerun' not in st.session_state:
+    st.session_state.trigger_rerun = False  # Track if a re-run is needed
 if 'continue_process' not in st.session_state:
-    st.session_state.continue_process = False  # Track if the user wants to continue the process
+    st.session_state.continue_process = True  # Track if the user wants to continue
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -158,6 +160,9 @@ def render_query_section():
                             "extraction_results": st.session_state.extraction_results
                         }
                     })
+                    
+                    # Trigger a re-run to update the UI
+                    st.session_state.trigger_rerun = True
                 
                 except Exception as e:
                     st.error(f"Error executing query: {str(e)}")
@@ -180,10 +185,6 @@ if st.session_state.interaction_history:
             st.markdown(interaction['content'], unsafe_allow_html=True)
         
         st.markdown("---")
-
-# Initial "Enter Query" section (if no interactions yet)
-if not st.session_state.interaction_history:
-    render_query_section()
 
 # Email Generator Button 
 if st.session_state.merchant_data:
@@ -247,14 +248,20 @@ if st.session_state.merchant_data:
             except Exception as e:
                 st.error(f"Error generating emails: {str(e)}")
 
-    # Add a "Continue Process?" button
-    if st.button("Continue Process?", key="continue_process"):
+    # Ask user if they want to continue
+    if st.button("Continue", key="continue_button"):
         st.session_state.continue_process = True
+    else:
+        st.session_state.continue_process = False
 
-# Render the next query input box if the user clicks "Continue Process?"
+# Render the "Enter Query" section if the user chooses to continue
 if st.session_state.continue_process:
     render_query_section()
-    st.session_state.continue_process = False  # Reset the state
+
+# Trigger a re-run if needed
+if st.session_state.trigger_rerun:
+    st.session_state.trigger_rerun = False  # Reset the trigger
+    st.rerun()  # Force a re-run of the script
 
 # Footer Section 
 st.markdown("---")
