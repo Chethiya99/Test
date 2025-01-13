@@ -78,7 +78,7 @@ if api_key:
     st.session_state.api_key = api_key
 
 # Database Selection
-db_options = ["merchant_data_dubai.db", "merchant_data_singapore.db"]
+db_options = ["merchant_data_singapore.db", "merchant_data_dubai.db"]
 new_selected_db = st.sidebar.selectbox("Select Database:", db_options, index=db_options.index(st.session_state.selected_db))
 
 # Check if the database selection has changed
