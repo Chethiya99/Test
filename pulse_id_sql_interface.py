@@ -115,7 +115,7 @@ if st.session_state.selected_db and api_key and not st.session_state.db_initiali
         st.sidebar.error(f"Error: {str(e)}")
 
 # Function to handle general questions using the LLM
-def handle_general_questions(user_query):
+def handle_general_questions(user_query, llm):
     """Use the LLM to generate a response for general questions."""
     try:
         # Use the same LLM instance to generate a response
@@ -125,7 +125,7 @@ def handle_general_questions(user_query):
         return f"Error generating response: {str(e)}"
 
 # Function to render the "Enter Query" section
-def render_query_section():
+def render_query_section(llm):
     st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
     user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.", key=f"query_{len(st.session_state.interaction_history)}")
     
@@ -135,7 +135,7 @@ def render_query_section():
                 try:
                     # Check if the query is a general question
                     if any(keyword in user_query.lower() for keyword in ["who are you", "what is your name", "what do you do", "what is pulse id", "tell me about yourself"]):
-                        general_response = handle_general_questions(user_query)
+                        general_response = handle_general_questions(user_query, llm)
                         st.session_state.raw_output = general_response
                         st.session_state.extraction_results = None
                         st.session_state.merchant_data = None
@@ -216,7 +216,7 @@ if st.session_state.interaction_history:
 
 # Initial "Enter Query" section (if no interactions yet)
 if not st.session_state.interaction_history:
-    render_query_section()
+    render_query_section(llm)
 
 # Email Generator Button 
 if st.session_state.merchant_data:
@@ -281,7 +281,7 @@ if st.session_state.merchant_data:
                 st.error(f"Error generating emails: {str(e)}")
 
     # Render the "Enter Query" section below the "Generate Emails" button
-    render_query_section()
+    render_query_section(llm)
 
 # Trigger a re-run if needed
 if st.session_state.trigger_rerun:
