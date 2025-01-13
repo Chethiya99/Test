@@ -251,11 +251,12 @@ if st.session_state.merchant_data:
             except Exception as e:
                 st.error(f"Error generating emails: {str(e)}")
 
-    # Ask user if they want to continue
-    if st.button("Continue", key="continue_button"):
-        st.session_state.continue_process = True
-    else:
-        st.session_state.continue_process = False
+    # Show the "Continue" button only after generating emails
+    if st.session_state.email_results:
+        if st.button("Continue", key="continue_button"):
+            st.session_state.continue_process = True
+        else:
+            st.session_state.continue_process = False
 
 # Render the "Enter Query" section if the user chooses to continue
 if st.session_state.continue_process:
