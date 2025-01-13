@@ -45,8 +45,6 @@ if 'selected_template' not in st.session_state:
     st.session_state.selected_template = "email_task_description1.txt"  # Default template
 if 'trigger_rerun' not in st.session_state:
     st.session_state.trigger_rerun = False  # Track if a re-run is needed
-if 'continue_process' not in st.session_state:
-    st.session_state.continue_process = True  # Track if the user wants to continue
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -161,9 +159,6 @@ def render_query_section():
                         }
                     })
                     
-                    # Reset continue_process to ensure the query section remains visible
-                    st.session_state.continue_process = True
-                    
                     # Trigger a re-run to update the UI
                     st.session_state.trigger_rerun = True
                 
@@ -188,6 +183,10 @@ if st.session_state.interaction_history:
             st.markdown(interaction['content'], unsafe_allow_html=True)
         
         st.markdown("---")
+
+# Initial "Enter Query" section (if no interactions yet)
+if not st.session_state.interaction_history:
+    render_query_section()
 
 # Email Generator Button 
 if st.session_state.merchant_data:
@@ -251,15 +250,7 @@ if st.session_state.merchant_data:
             except Exception as e:
                 st.error(f"Error generating emails: {str(e)}")
 
-    # Show the "Continue" button only after generating emails
-    if st.session_state.email_results:
-        if st.button("Continue", key="continue_button"):
-            st.session_state.continue_process = True
-        else:
-            st.session_state.continue_process = False
-
-# Render the "Enter Query" section if the user chooses to continue
-if st.session_state.continue_process:
+    # Render the "Enter Query" section below the "Generate Emails" button
     render_query_section()
 
 # Trigger a re-run if needed
