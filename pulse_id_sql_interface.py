@@ -255,17 +255,11 @@ if st.session_state.merchant_data:
     # Add a "Continue Process?" button
     if st.button("Continue Process?", key="continue_process"):
         st.session_state.continue_process = True
-        st.experimental_rerun()  # Trigger a re-run to update the UI
 
 # Render the next query input box if the user clicks "Continue Process?"
 if st.session_state.continue_process:
     render_query_section()
     st.session_state.continue_process = False  # Reset the state
-
-# Trigger a re-run if needed
-if st.session_state.trigger_rerun:
-    st.session_state.trigger_rerun = False  # Reset the trigger
-    st.experimental_rerun()  # Force a re-run of the script
 
 # Footer Section 
 st.markdown("---")
