@@ -99,12 +99,12 @@ st.sidebar.success(f"✅ Selected Template: {st.session_state.selected_template}
 if st.session_state.selected_db and api_key and not st.session_state.db_initialized:
     try:
         # Initialize Groq LLM
-        llm = ChatGroq(temperature=0, model_name=model_name, api_key=st.session_state.api_key)
+        st.session_state.llm = ChatGroq(temperature=0, model_name=model_name, api_key=st.session_state.api_key)
         # Initialize SQLDatabase
         st.session_state.db = SQLDatabase.from_uri(f"sqlite:///{st.session_state.selected_db}", sample_rows_in_table_info=3)
         # Create SQL Agent
         st.session_state.agent_executor = create_sql_agent(
-            llm=llm,
+            llm=st.session_state.llm,
             db=st.session_state.db,
             agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
             verbose=True
@@ -125,7 +125,7 @@ def handle_general_questions(user_query, llm):
         return f"Error generating response: {str(e)}"
 
 # Function to render the "Enter Query" section
-def render_query_section(llm):
+def render_query_section():
     st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
     user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.", key=f"query_{len(st.session_state.interaction_history)}")
     
@@ -135,7 +135,7 @@ def render_query_section(llm):
                 try:
                     # Check if the query is a general question
                     if any(keyword in user_query.lower() for keyword in ["who are you", "what is your name", "what do you do", "what is pulse id", "tell me about yourself"]):
-                        general_response = handle_general_questions(user_query, llm)
+                        general_response = handle_general_questions(user_query, st.session_state.llm)
                         st.session_state.raw_output = general_response
                         st.session_state.extraction_results = None
                         st.session_state.merchant_data = None
@@ -216,7 +216,7 @@ if st.session_state.interaction_history:
 
 # Initial "Enter Query" section (if no interactions yet)
 if not st.session_state.interaction_history:
-    render_query_section(llm)
+    render_query_section()
 
 # Email Generator Button 
 if st.session_state.merchant_data:
@@ -281,7 +281,7 @@ if st.session_state.merchant_data:
                 st.error(f"Error generating emails: {str(e)}")
 
     # Render the "Enter Query" section below the "Generate Emails" button
-    render_query_section(llm)
+    render_query_section()
 
 # Trigger a re-run if needed
 if st.session_state.trigger_rerun:
