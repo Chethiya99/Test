@@ -161,6 +161,9 @@ def render_query_section():
                         }
                     })
                     
+                    # Reset continue_process to ensure the query section remains visible
+                    st.session_state.continue_process = True
+                    
                     # Trigger a re-run to update the UI
                     st.session_state.trigger_rerun = True
                 
