@@ -191,7 +191,7 @@ if not st.session_state.interaction_history:
     render_query_section()
 
 # Email Generator Button 
-if st.session_state.merchant_data:
+if st.session_state.merchant_data and not st.session_state.show_continue_button:
     if st.button("Generate Emails", key="generate_emails"):
         with st.spinner("Generating emails..."):
             try:
@@ -262,7 +262,7 @@ if st.session_state.show_continue_button:
         st.session_state.trigger_rerun = True  # Trigger a re-run to reset the query section
 
 # Render the query section after clicking "Continue Asking Questions"
-if not st.session_state.show_continue_button and st.session_state.interaction_history:
+if not st.session_state.show_continue_button and st.session_state.email_results:
     render_query_section()
 
 # Trigger a re-run if needed
