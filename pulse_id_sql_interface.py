@@ -1,7 +1,6 @@
 __import__('pysqlite3')
 import sys
 import os
-import time  # Import time module for unique key generation
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 import re
 import pandas as pd
@@ -48,8 +47,6 @@ if 'trigger_rerun' not in st.session_state:
     st.session_state.trigger_rerun = False  # Track if a re-run is needed
 if 'show_continue_button' not in st.session_state:
     st.session_state.show_continue_button = False  # Track if "Continue Asking Questions" button should be shown
-if 'query_counter' not in st.session_state:
-    st.session_state.query_counter = 0  # Track the number of queries to ensure unique keys
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -122,17 +119,9 @@ if st.session_state.selected_db and api_key and not st.session_state.db_initiali
 # Function to render the "Enter Query" section
 def render_query_section():
     st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
+    user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.", key=f"query_{len(st.session_state.interaction_history)}")
     
-    # Generate a unique key for the text_area widget using a timestamp
-    unique_key = f"query_{len(st.session_state.interaction_history)}_{time.time()}"
-    
-    user_query = st.text_area(
-        "Enter your query:",
-        placeholder="E.g., Show top 10 merchants and their emails.",
-        key=unique_key
-    )
-    
-    if st.button("Run Query", key=f"run_query_{unique_key}"):
+    if st.button("Run Query", key=f"run_query_{len(st.session_state.interaction_history)}"):
         if user_query:
             with st.spinner("Running query..."):
                 try:
@@ -171,9 +160,6 @@ def render_query_section():
                             "extraction_results": st.session_state.extraction_results
                         }
                     })
-                    
-                    # Increment the query counter to ensure unique keys in the next iteration
-                    st.session_state.query_counter += 1
                     
                     # Trigger a re-run to update the UI
                     st.session_state.trigger_rerun = True
@@ -272,13 +258,11 @@ if st.session_state.merchant_data and not st.session_state.show_continue_button:
 # Show "Continue Asking Questions" button after initial process is done
 if st.session_state.show_continue_button:
     if st.button("Continue Asking Questions", key="continue_asking"):
-        # Reset states to allow the query section to reappear
-        st.session_state.show_continue_button = False
-        st.session_state.email_results = None
+        st.session_state.show_continue_button = False  # Hide the button
         st.session_state.trigger_rerun = True  # Trigger a re-run to reset the query section
 
 # Render the query section after clicking "Continue Asking Questions"
-if not st.session_state.show_continue_button and st.session_state.email_results is None:
+if not st.session_state.show_continue_button and st.session_state.email_results:
     render_query_section()
 
 # Trigger a re-run if needed
