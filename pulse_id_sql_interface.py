@@ -38,15 +38,13 @@ if 'api_key' not in st.session_state:
 if 'interaction_history' not in st.session_state:
     st.session_state.interaction_history = []  # Store all interactions (queries, results, emails)
 if 'selected_db' not in st.session_state:
-    st.session_state.selected_db = "merchant_data_singapore.db"  # Default database
+    st.session_state.selected_db = "merchant_data_dubai.db"  # Default database
 if 'db_initialized' not in st.session_state:
     st.session_state.db_initialized = False  # Track if the database is initialized
 if 'selected_template' not in st.session_state:
     st.session_state.selected_template = "email_task_description1.txt"  # Default template
 if 'trigger_rerun' not in st.session_state:
     st.session_state.trigger_rerun = False  # Track if a re-run is needed
-if 'show_continue_button' not in st.session_state:
-    st.session_state.show_continue_button = False  # Track if "Continue Asking Questions" button should be shown
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -186,87 +184,73 @@ if st.session_state.interaction_history:
         
         st.markdown("---")
 
-# Email Generator Button and Continue Querying Button
-if st.session_state.merchant_data:  # Show buttons if merchant data is available
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("Generate Emails", key="generate_emails"):
-            with st.spinner("Generating emails..."):
-                try:
-                    # Define email generation agent 
-                    llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
-                    email_agent = Agent(
-                        role="Email Content Generator",
-                        goal="Generate personalized marketing emails for merchants.",
-                        backstory="You are a marketing expert named 'Sumit Uttamchandani' of Pulse iD fintech company skilled in crafting professional and engaging emails for merchants.",
-                        verbose=True,
-                        allow_delegation=False,
-                        llm=llm_email 
-                    )
+# Initial "Enter Query" section (if no interactions yet)
+if not st.session_state.interaction_history:
+    render_query_section()
 
-                    # Read the task description from the selected template file
-                    description_file_path = f"email_descriptions/{st.session_state.selected_template}"
-                    email_task_description = read_email_task_description(description_file_path)
+# Email Generator Button 
+if st.session_state.merchant_data:
+    if st.button("Generate Emails", key="generate_emails"):
+        with st.spinner("Generating emails..."):
+            try:
+                # Define email generation agent 
+                llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
+                email_agent = Agent(
+                    role="Email Content Generator",
+                    goal="Generate personalized marketing emails for merchants.",
+                    backstory="You are a marketing expert named 'Sumit Uttamchandani' of Pulse iD fintech company skilled in crafting professional and engaging emails for merchants.",
+                    verbose=True,
+                    allow_delegation=False,
+                    llm=llm_email 
+                )
 
-                    # Email generation task using extracted results 
-                    task = Task(
-                        description=email_task_description.format(merchant_data=st.session_state.merchant_data),
-                        agent=email_agent,
-                        expected_output="Marketing emails for each selected merchant, tailored to their business details."
-                    )
+                # Read the task description from the selected template file
+                description_file_path = f"email_descriptions/{st.session_state.selected_template}"
+                email_task_description = read_email_task_description(description_file_path)
 
-                    # Crew execution 
-                    crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
-                    email_results = crew.kickoff()
-                    st.session_state.email_results = email_results
+                # Email generation task using extracted results 
+                task = Task(
+                    description=email_task_description.format(merchant_data=st.session_state.merchant_data),
+                    agent=email_agent,
+                    expected_output="Marketing emails for each selected merchant, tailored to their business details."
+                )
+
+                # Crew execution 
+                crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
+                email_results = crew.kickoff()
+                st.session_state.email_results = email_results
+                
+                # Display results 
+                if email_results.raw:
+                    email_body = email_results.raw  # Get the raw email content
                     
-                    # Display results 
-                    if email_results.raw:
-                        email_body = email_results.raw  # Get the raw email content
-                        
-                        # Function to extract image URL from email body
-                        def extract_image_url(email_body):
-                            url_pattern = r'https?://[^\s]+'
-                            urls = re.findall(url_pattern, email_body)
-                            return urls[0] if urls else None
+                    # Function to extract image URL from email body
+                    def extract_image_url(email_body):
+                        url_pattern = r'https?://[^\s]+'
+                        urls = re.findall(url_pattern, email_body)
+                        return urls[0] if urls else None
 
-                        # Extract image URL from the email body
-                        image_url = extract_image_url(email_body)
+                    # Extract image URL from the email body
+                    image_url = extract_image_url(email_body)
 
-                        # Insert image into the email body at a specific position (after "Dear Merchant Name")
-                        if image_url:
-                            modified_email_body = email_body.replace("Dear", f"Dear,<br><img src='{image_url}' style='max-width: 100%;' />")
-                            email_body = modified_email_body
-                        
-                        # Append the generated email to the interaction history
-                        st.session_state.interaction_history.append({
-                            "type": "email",
-                            "content": email_body
-                        })
-                        
-                        # Display the email
-                        st.markdown(email_body, unsafe_allow_html=True)
+                    # Insert image into the email body at a specific position (after "Dear Merchant Name")
+                    if image_url:
+                        modified_email_body = email_body.replace("Dear", f"Dear,<br><img src='{image_url}' style='max-width: 100%;' />")
+                        email_body = modified_email_body
+                    
+                    # Append the generated email to the interaction history
+                    st.session_state.interaction_history.append({
+                        "type": "email",
+                        "content": email_body
+                    })
+                    
+                    # Display the email
+                    st.markdown(email_body, unsafe_allow_html=True)
 
-                        # Show the "Continue Asking Questions" button after email generation
-                        st.session_state.show_continue_button = True
+            except Exception as e:
+                st.error(f"Error generating emails: {str(e)}")
 
-                except Exception as e:
-                    st.error(f"Error generating emails: {str(e)}")
-    
-    with col2:
-        if st.button("Continue Querying", key="continue_querying"):
-            st.session_state.show_continue_button = True  # Show the "Ask next query" section
-            st.session_state.trigger_rerun = True  # Trigger a re-run to reset the query section
-
-# Show "Continue Asking Questions" button after initial process is done
-if st.session_state.show_continue_button:
-    if st.button("Continue Asking Questions", key="continue_asking"):
-        st.session_state.show_continue_button = False  # Hide the button
-        st.session_state.trigger_rerun = True  # Trigger a re-run to reset the query section
-
-# Render the query section after clicking "Continue Asking Questions" or "Continue Querying"
-if st.session_state.show_continue_button or st.session_state.trigger_rerun or not st.session_state.interaction_history:
+    # Render the "Enter Query" section below the "Generate Emails" button
     render_query_section()
 
 # Trigger a re-run if needed
