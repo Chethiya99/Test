@@ -195,7 +195,7 @@ elif st.session_state.show_continue_button:
     if st.button("Continue Asking Questions", key="continue_asking"):
         st.session_state.show_continue_button = False  # Hide the button
         st.session_state.trigger_rerun = True  # Trigger a re-run to reset the query section
-else:
+elif not st.session_state.show_continue_button:
     # Render the query section after clicking "Continue Asking Questions"
     render_query_section()
 
