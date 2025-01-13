@@ -123,16 +123,39 @@ def render_query_section():
         if user_query:
             with st.spinner("Running query..."):
                 try:
-                    # Pass the query to the SQL agent
+                    # Execute the query using the agent
                     result = st.session_state.agent_executor.invoke(user_query)
                     st.session_state.raw_output = result['output'] if isinstance(result, dict) else result
+                    
+                    # Process raw output using an extraction agent 
+                    extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
+                    extractor_agent = Agent(
+                        role="Data Extractor",
+                        goal="Extract merchants and emails from the raw output.",
+                        backstory="You are an expert in extracting structured information from text.",
+                        provider="Groq",
+                        llm=extractor_llm 
+                    )
+                    
+                    extract_task = Task(
+                        description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
+                        agent=extractor_agent,
+                        expected_output="A structured list of merchants and their associated email addresses extracted from the given text."
+                    )
+                    
+                    # Crew execution for extraction 
+                    extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
+                    extraction_results = extraction_crew.kickoff()
+                    st.session_state.extraction_results = extraction_results if extraction_results else ""
+                    st.session_state.merchant_data = st.session_state.extraction_results
                     
                     # Append the query and results to the interaction history
                     st.session_state.interaction_history.append({
                         "type": "query",
                         "content": {
                             "query": user_query,
-                            "raw_output": st.session_state.raw_output
+                            "raw_output": st.session_state.raw_output,
+                            "extraction_results": st.session_state.extraction_results
                         }
                     })
                     
@@ -152,6 +175,9 @@ if st.session_state.interaction_history:
             st.markdown(f"#### Query: {interaction['content']['query']}")
             st.markdown("**Raw Output:**")
             st.write(interaction['content']['raw_output'])
+            if interaction['content']['extraction_results']:
+                st.markdown("**Extracted Merchants:**")
+                st.write(interaction['content']['extraction_results'].raw)
         elif interaction["type"] == "email":
             st.markdown("#### Generated Email:")
             st.markdown(interaction['content'], unsafe_allow_html=True)
