@@ -45,6 +45,8 @@ if 'selected_template' not in st.session_state:
     st.session_state.selected_template = "email_task_description1.txt"  # Default template
 if 'trigger_rerun' not in st.session_state:
     st.session_state.trigger_rerun = False  # Track if a re-run is needed
+if 'show_continue_button' not in st.session_state:
+    st.session_state.show_continue_button = False  # Track if "Continue Asking Questions" button should be shown
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -166,10 +168,6 @@ def render_query_section():
                     st.error(f"Error executing query: {str(e)}")
         else:
             st.warning("⚠️ Please enter a query before clicking 'Run Query'.")
-    
-    # Add the "Continue Asking Questions" button after the query section
-    if st.button("Continue Asking Questions", key="continue_asking"):
-        st.session_state.trigger_rerun = True  # Trigger a re-run to reset the query section
 
 # Display Interaction History
 if st.session_state.interaction_history:
@@ -251,11 +249,17 @@ if st.session_state.merchant_data:
                     # Display the email
                     st.markdown(email_body, unsafe_allow_html=True)
 
+                    # Show the "Continue Asking Questions" button after email generation
+                    st.session_state.show_continue_button = True
+
             except Exception as e:
                 st.error(f"Error generating emails: {str(e)}")
 
-    # Render the "Enter Query" section below the "Generate Emails" button
-    render_query_section()
+# Show "Continue Asking Questions" button after initial process is done
+if st.session_state.show_continue_button:
+    if st.button("Continue Asking Questions", key="continue_asking"):
+        st.session_state.show_continue_button = False  # Hide the button
+        st.session_state.trigger_rerun = True  # Trigger a re-run to reset the query section
 
 # Trigger a re-run if needed
 if st.session_state.trigger_rerun:
