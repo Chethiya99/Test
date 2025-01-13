@@ -6,10 +6,29 @@ Use the below format:
 
 Subject: Boost Customer Traffic for 'merchant_name' – No Upfront Cost
 
-Dear 'merchant_name',  
-'image url'  
+**Randomly select one of the following opening lines and use it to start the email:**
 
-We’re excited to connect with **'merchant_name'** and share how we can help you **drive more customers, increase sales, and grow your business** through our **Pulse iD Marketplace**.  
+1. Dear 'merchant_name',  
+   'image url'  
+   We’re thrilled to connect with **'merchant_name'** and share how we can help you **drive more customers, increase sales, and grow your business** through our **Pulse iD Marketplace**.  
+
+2. Dear 'merchant_name',  
+   'image url'  
+   At Pulse iD, we’re passionate about helping businesses like **'merchant_name'** attract more customers and boost sales through our innovative **card-linked offers platform**.  
+
+3. Dear 'merchant_name',  
+   'image url'  
+   We’re excited to introduce **'merchant_name'** to our **Pulse iD Marketplace**, a powerful tool designed to help businesses like yours **increase foot traffic and drive revenue growth**.  
+
+4. Dear 'merchant_name',  
+   'image url'  
+   It’s a pleasure to connect with **'merchant_name'**! We’d love to show you how our **Pulse iD Marketplace** can help your business **attract more customers and grow sales**—all with no upfront costs.  
+
+5. Dear 'merchant_name',  
+   'image url'  
+   We’re reaching out to **'merchant_name'** because we believe our **Pulse iD Marketplace** can help you **drive more customers to your business** and achieve your growth goals.  
+
+---
 
 At Pulse iD, we specialize in creating **targeted, cost-effective campaigns** that bring high-value customers to your doorstep. Here’s how our program can benefit your business:  
 
@@ -96,4 +115,4 @@ If you have any questions or would like to explore offer options, feel free to r
 [Your Name]  
 [Your Position]  
 Pulse iD  
-[Your Contact Information]  
+sumit@pulseid.net  
