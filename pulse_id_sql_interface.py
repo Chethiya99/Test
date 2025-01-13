@@ -186,21 +186,12 @@ if st.session_state.interaction_history:
         
         st.markdown("---")
 
-# Logic for rendering sections
+# Initial "Enter Query" section (if no interactions yet)
 if not st.session_state.interaction_history:
-    # Initial "Enter Query" section (if no interactions yet)
-    render_query_section()
-elif st.session_state.show_continue_button:
-    # Show "Continue Asking Questions" button after email generation
-    if st.button("Continue Asking Questions", key="continue_asking"):
-        st.session_state.show_continue_button = False  # Hide the button
-        st.session_state.trigger_rerun = True  # Trigger a re-run to reset the query section
-elif not st.session_state.show_continue_button:
-    # Render the query section after clicking "Continue Asking Questions"
     render_query_section()
 
 # Email Generator Button 
-if st.session_state.merchant_data and not st.session_state.show_continue_button:
+if st.session_state.merchant_data:
     if st.button("Generate Emails", key="generate_emails"):
         with st.spinner("Generating emails..."):
             try:
@@ -263,6 +254,16 @@ if st.session_state.merchant_data and not st.session_state.show_continue_button:
 
             except Exception as e:
                 st.error(f"Error generating emails: {str(e)}")
+
+# Show "Continue Asking Questions" button after initial process is done
+if st.session_state.show_continue_button:
+    if st.button("Continue Asking Questions", key="continue_asking"):
+        st.session_state.show_continue_button = False  # Hide the button
+        st.session_state.trigger_rerun = True  # Trigger a re-run to reset the query section
+
+# Render the query section after clicking "Continue Asking Questions"
+if not st.session_state.show_continue_button and st.session_state.interaction_history:
+    render_query_section()
 
 # Trigger a re-run if needed
 if st.session_state.trigger_rerun:
