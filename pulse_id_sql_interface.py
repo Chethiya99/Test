@@ -261,6 +261,10 @@ if st.session_state.show_continue_button:
         st.session_state.show_continue_button = False  # Hide the button
         st.session_state.trigger_rerun = True  # Trigger a re-run to reset the query section
 
+# Render the query section after clicking "Continue Asking Questions"
+if not st.session_state.show_continue_button and st.session_state.interaction_history:
+    render_query_section()
+
 # Trigger a re-run if needed
 if st.session_state.trigger_rerun:
     st.session_state.trigger_rerun = False  # Reset the trigger
