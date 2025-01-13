@@ -130,8 +130,8 @@ def render_query_section():
                     # Process raw output using an extraction agent 
                     extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
                     extractor_agent = Agent(
-                        role="Data Extractor",
-                        goal="Extract merchants and emails from the raw output.",
+                        role="Data Extractor and general output provider",
+                        goal="Extract merchants and emails from the raw output if they are available. if not generate precise outputs related to input text.",
                         backstory="You are an expert in extracting structured information from text.",
                         provider="Groq",
                         llm=extractor_llm 
