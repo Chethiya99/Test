@@ -197,7 +197,7 @@ if st.session_state.merchant_data:
                 llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
                 email_agent = Agent(
                     role="Email Content Generator",
-                    goal="Generate personalized marketing emails for merchants.",
+                    goal="Generate personalized marketing emails for merchants if data is available. if not tell user to select merchants first.",
                     backstory="You are a marketing expert named 'Sumit Uttamchandani' of Pulse iD fintech company skilled in crafting professional and engaging emails for merchants.",
                     verbose=True,
                     allow_delegation=False,
