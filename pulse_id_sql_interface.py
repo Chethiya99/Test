@@ -212,7 +212,7 @@ if st.session_state.merchant_data:
                 task = Task(
                     description=email_task_description.format(merchant_data=st.session_state.merchant_data),
                     agent=email_agent,
-                    expected_output="Marketing emails for each selected merchant, tailored to their business details."
+                    expected_output="Marketing emails for each selected merchant, tailored to their business details. please tell the user to extract merchants first if theere no data available."
                 )
 
                 # Crew execution 
