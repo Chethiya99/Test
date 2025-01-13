@@ -45,6 +45,8 @@ if 'selected_template' not in st.session_state:
     st.session_state.selected_template = "email_task_description1.txt"  # Default template
 if 'trigger_rerun' not in st.session_state:
     st.session_state.trigger_rerun = False  # Track if a re-run is needed
+if 'continue_query' not in st.session_state:
+    st.session_state.continue_query = False  # Track if the user wants to continue
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -247,11 +249,16 @@ if st.session_state.merchant_data:
                     # Display the email
                     st.markdown(email_body, unsafe_allow_html=True)
 
+                    # Ask the user if they want to continue
+                    if st.button("Continue", key="continue_button"):
+                        st.session_state.continue_query = True  # Set a flag to show the next query section
+
             except Exception as e:
                 st.error(f"Error generating emails: {str(e)}")
 
-    # Render the "Enter Query" section below the "Generate Emails" button
-    render_query_section()
+    # Render the "Enter Query" section below the "Generate Emails" button if the user chooses to continue
+    if st.session_state.get("continue_query", False):
+        render_query_section()
 
 # Trigger a re-run if needed
 if st.session_state.trigger_rerun:
