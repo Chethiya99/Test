@@ -38,7 +38,7 @@ if 'api_key' not in st.session_state:
 if 'interaction_history' not in st.session_state:
     st.session_state.interaction_history = []  # Store all interactions (queries, results, emails)
 if 'selected_db' not in st.session_state:
-    st.session_state.selected_db = "merchant_data_singapore.db"  # Default database
+    st.session_state.selected_db = "merchant_data_dubai.db"  # Default database
 if 'db_initialized' not in st.session_state:
     st.session_state.db_initialized = False  # Track if the database is initialized
 if 'selected_template' not in st.session_state:
@@ -78,7 +78,7 @@ if api_key:
     st.session_state.api_key = api_key
 
 # Database Selection
-db_options = ["merchant_data_singapore.db", "merchant_data_dubai.db"]
+db_options = ["merchant_data_dubai.db", "merchant_data_singapore.db"]
 new_selected_db = st.sidebar.selectbox("Select Database:", db_options, index=db_options.index(st.session_state.selected_db))
 
 # Check if the database selection has changed
@@ -130,17 +130,17 @@ def render_query_section():
                     # Process raw output using an extraction agent 
                     extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
                     extractor_agent = Agent(
-                        role="Data Extractor and general output provider",
-                        goal="Extract merchants and emails from the raw output if they are available. if not available, dont generate anything",
+                        role="Data Extractor",
+                        goal="Extract merchants and emails from the raw output.",
                         backstory="You are an expert in extracting structured information from text.",
                         provider="Groq",
                         llm=extractor_llm 
                     )
                     
                     extract_task = Task(
-                        description=f"if only available, Extract a list of 'merchants', their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}.if not available, dont generate anything",
+                        description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
                         agent=extractor_agent,
-                        expected_output="A structured list of merchants, their associated email addresses extracted from the given text if only they are available. if not dont generate anything"
+                        expected_output="A structured list of merchants and their associated email addresses extracted from the given text."
                     )
                     
                     # Crew execution for extraction 
@@ -197,7 +197,7 @@ if st.session_state.merchant_data:
                 llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
                 email_agent = Agent(
                     role="Email Content Generator",
-                    goal="Generate personalized marketing emails for merchants if data is available. if not tell user to select merchants first.",
+                    goal="Generate personalized marketing emails for merchants.",
                     backstory="You are a marketing expert named 'Sumit Uttamchandani' of Pulse iD fintech company skilled in crafting professional and engaging emails for merchants.",
                     verbose=True,
                     allow_delegation=False,
