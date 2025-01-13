@@ -166,6 +166,10 @@ def render_query_section():
                     st.error(f"Error executing query: {str(e)}")
         else:
             st.warning("⚠️ Please enter a query before clicking 'Run Query'.")
+    
+    # Add the "Continue Asking Questions" button after the query section
+    if st.button("Continue Asking Questions", key="continue_asking"):
+        st.session_state.trigger_rerun = True  # Trigger a re-run to reset the query section
 
 # Display Interaction History
 if st.session_state.interaction_history:
