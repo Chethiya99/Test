@@ -147,7 +147,8 @@ def render_query_section():
                 try:
                     # Define company details and agent role
                     company_details = """
-                    I am a dedicated agent specializing in sourcing merchants from various regions. My current focus includes a strong network of merchants in the restaurant industry. Additionally, I have the expertise to craft effective and professional emails tailored to your needs.
+                    You are a dedicated agent specializing in sourcing merchants from various regions for PulseiD. your current focus includes a strong network of merchants in the restaurant industry.
+                    Additionally, you have the expertise to craft effective and professional emails tailored to your needs.
                     """
 
                     # Prepend company details to the user's query
