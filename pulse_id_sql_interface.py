@@ -126,8 +126,8 @@ def render_query_section():
     
     # Predefined questions
     predefined_questions = [
-        "Give first five merchant names and their emails",
-        "Give first 10 merchants, their emails and their image urls",
+        "Give first merchant name and their email",
+        "Give first two merchants, their emails and their image urls",
         "Who are You?"
     ]
     
