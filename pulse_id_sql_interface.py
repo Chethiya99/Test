@@ -147,9 +147,7 @@ def render_query_section():
                 try:
                     # Define company details and agent role
                     company_details = """
-                    Pulse iD is a fintech company specializing in merchant solutions and personalized marketing. 
-                    As a marketing agent for Pulse iD, my role is to assist you in querying the merchant database 
-                    and generating personalized emails for marketing purposes.
+                    I am a dedicated agent specializing in sourcing merchants from various regions. My current focus includes a strong network of merchants in the restaurant industry. Additionally, I have the expertise to craft effective and professional emails tailored to your needs.
                     """
 
                     # Prepend company details to the user's query
