@@ -1,3 +1,8 @@
+To add a set of predefined general questions that users can click on to populate the query input, we can modify the `render_query_section` function to include buttons for these questions. When a user clicks on one of these buttons, the corresponding query will be automatically populated in the text area, and the query will be executed immediately.
+
+Here’s the updated code with the changes:
+
+```python
 __import__('pysqlite3')
 import sys
 import os
@@ -123,7 +128,23 @@ if st.session_state.selected_db and api_key and not st.session_state.db_initiali
 # Function to render the "Enter Query" section
 def render_query_section():
     st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
-    user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.", key=f"query_{len(st.session_state.interaction_history)}")
+    
+    # Predefined questions
+    predefined_questions = [
+        "Give first five merchant names and their emails",
+        "Give first 10 merchants, their emails and their image urls",
+        "Who are You?"
+    ]
+    
+    # Display buttons for predefined questions
+    st.markdown("**Predefined Questions:**")
+    for question in predefined_questions:
+        if st.button(question, key=f"predefined_{question}"):
+            st.session_state.user_query = question  # Store the question in session state
+            st.session_state.trigger_rerun = True  # Trigger a re-run to process the query
+    
+    # Text area for user input
+    user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.", key=f"query_{len(st.session_state.interaction_history)}", value=st.session_state.get('user_query', ''))
     
     if st.button("Run Query", key=f"run_query_{len(st.session_state.interaction_history)}"):
         if user_query:
@@ -276,3 +297,17 @@ st.markdown(
     "<div style='text-align: center; font-size: 14px;'>Powered by <strong>Pulse iD</strong> | Built with 🐍 Python and Streamlit</div>",
     unsafe_allow_html=True 
 )
+```
+
+### Key Changes:
+1. **Predefined Questions Section**:
+   - Added a section with buttons for predefined questions like "Give first five merchant names and their emails", "Give first 10 merchants, their emails and their image urls", and "Who are You?".
+   - When a user clicks on one of these buttons, the corresponding query is populated in the text area and executed immediately.
+
+2. **Session State for User Query**:
+   - Added `st.session_state.user_query` to store the selected predefined question. This ensures that the query is retained even after a re-run.
+
+3. **Trigger Rerun**:
+   - When a predefined question is clicked, `st.session_state.trigger_rerun` is set to `True` to trigger a re-run and process the query.
+
+This approach maintains the existing workflow while adding the convenience of predefined questions for users.
