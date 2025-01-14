@@ -197,7 +197,7 @@ if st.session_state.interaction_history:
                 st.write(interaction['content']['extraction_results'].raw)
                 
                 # Show the "Generate Emails" button for this specific interaction
-                if st.button(f"Generate Emails for Query {idx + 1}", key=f"generate_emails_{idx}"):
+                if st.button(f"Generate Emails For Above Extracted Merchants", key=f"generate_emails_{idx}"):
                     with st.spinner("Generating emails..."):
                         try:
                             # Define email generation agent 
