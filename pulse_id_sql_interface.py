@@ -57,7 +57,7 @@ def read_email_task_description(file_path):
 # Header Section with Title and Logo
 st.image("logo.png", width=150)  # Ensure you have your logo in the working directory
 st.markdown(
-    "<h1 style='text-align: center; color: #4CAF50;'>📊 Pulse iD - SQL Database Query Interface</h1>",
+    "<h1 style='text-align: center; color: #4CAF50;'>📊 PulseID Merchant Scout Agent</h1>",
     unsafe_allow_html=True
 )
 st.markdown(
