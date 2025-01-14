@@ -190,11 +190,12 @@ if st.session_state.interaction_history:
             st.markdown(f"#### Query: {interaction['content']['query']}")
             st.markdown("**Raw Output:**")
             st.write(interaction['content']['raw_output'])
+            
+            # Only display extracted merchants if there is data
             if interaction['content']['extraction_results'] and interaction['content']['extraction_results'].raw:
                 st.markdown("**Extracted Merchants:**")
                 st.write(interaction['content']['extraction_results'].raw)
-            else:
-                st.markdown("**No merchants extracted.**")
+        
         elif interaction["type"] == "email":
             st.markdown("#### Generated Email:")
             st.markdown(interaction['content'], unsafe_allow_html=True)
@@ -205,8 +206,8 @@ if st.session_state.interaction_history:
 if not st.session_state.interaction_history:
     render_query_section()
 
-# Email Generator Button 
-if st.session_state.merchant_data:
+# Email Generator Button (only show if merchant data is available)
+if st.session_state.merchant_data and st.session_state.extraction_results and st.session_state.extraction_results.raw:
     if st.button("Generate Emails For Above Extracted Merchants", key="generate_emails"):
         with st.spinner("Generating emails..."):
             try:
