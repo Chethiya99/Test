@@ -20,67 +20,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for colorful UI
-st.markdown(
-    """
-    <style>
-    /* Gradient background for headers */
-    .gradient-header {
-        background: linear-gradient(90deg, #4CAF50, #2196F3);
-        color: white;
-        padding: 15px;
-        border-radius: 10px;
-        text-align: center;
-        font-size: 24px;
-        font-weight: bold;
-    }
-    /* Card-like sections */
-    .card {
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-    }
-    /* Colorful buttons */
-    .stButton button {
-        background: linear-gradient(90deg, #4CAF50, #2196F3);
-        color: white;
-        border: none;
-        border-radius: 5px;
-        padding: 10px 20px;
-        font-size: 16px;
-        cursor: pointer;
-    }
-    .stButton button:hover {
-        background: linear-gradient(90deg, #45a049, #1e88e5);
-    }
-    /* Predefined question buttons */
-    .predefined-button {
-        background: linear-gradient(90deg, #FF6F61, #FFD166);
-        color: white;
-        border: none;
-        border-radius: 5px;
-        padding: 10px 20px;
-        font-size: 14px;
-        cursor: pointer;
-        margin: 5px;
-    }
-    .predefined-button:hover {
-        background: linear-gradient(90deg, #e65a50, #e6b850);
-    }
-    /* Footer styling */
-    .footer {
-        text-align: center;
-        font-size: 14px;
-        color: #555;
-        margin-top: 20px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
 # Initialize session state
 if 'db' not in st.session_state:
     st.session_state.db = None
@@ -118,7 +57,7 @@ def read_email_task_description(file_path):
 # Header Section with Title and Logo
 st.image("logo.png", width=150)  # Ensure you have your logo in the working directory
 st.markdown(
-    "<div class='gradient-header'>📊 Pulse iD - SQL Database Query Interface</div>",
+    "<h1 style='text-align: center; color: #4CAF50;'>📊 Pulse iD - SQL Database Query Interface</h1>",
     unsafe_allow_html=True
 )
 st.markdown(
@@ -187,15 +126,15 @@ def render_query_section():
     
     # Predefined questions
     predefined_questions = [
-        "Give first merchant name and its email",
-        "Give first 5 merchants, their emails and their image urls",
+        "Give first five merchant names and their emails",
+        "Give first 10 merchants, their emails and their image urls",
         "Who are You?"
     ]
     
     # Display buttons for predefined questions
     st.markdown("**Predefined Questions:**")
     for question in predefined_questions:
-        if st.button(question, key=f"predefined_{question}", help="Click to auto-fill this query"):
+        if st.button(question, key=f"predefined_{question}"):
             st.session_state.user_query = question  # Store the question in session state
             st.session_state.trigger_rerun = True  # Trigger a re-run to process the query
     
@@ -350,6 +289,6 @@ if st.session_state.trigger_rerun:
 # Footer Section 
 st.markdown("---")
 st.markdown(
-    "<div class='footer'>Powered by <strong>Pulse iD</strong> | Built with 🐍 Python and Streamlit</div>",
+    "<div style='text-align: center; font-size: 14px;'>Powered by <strong>Pulse iD</strong> | Built with 🐍 Python and Streamlit</div>",
     unsafe_allow_html=True 
 )
