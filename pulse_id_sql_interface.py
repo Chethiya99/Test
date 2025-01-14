@@ -26,7 +26,7 @@ st.markdown(
     <style>
     /* Dark background for the entire app */
     body {
-        background-color: #1E1E1E;
+        background-color: #121212;
         color: #E0E0E0;
     }
     /* Gradient background for headers */
@@ -41,7 +41,7 @@ st.markdown(
     }
     /* Dark card-like sections */
     .card {
-        background: #2E2E2E;
+        background: #1E1E1E;
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -77,12 +77,12 @@ st.markdown(
     }
     /* Sidebar styling */
     .css-1d391kg, .css-1d391kg p {
-        background-color: #2E2E2E !important;
+        background-color: #1E1E1E !important;
         color: #E0E0E0 !important;
     }
     /* Text area styling */
     .stTextArea textarea {
-        background-color: #2E2E2E !important;
+        background-color: #1E1E1E !important;
         color: #E0E0E0 !important;
         border: 1px solid #4CAF50 !important;
     }
@@ -92,6 +92,13 @@ st.markdown(
         font-size: 14px;
         color: #E0E0E0;
         margin-top: 20px;
+    }
+    /* Custom styling for interaction history */
+    .interaction-history {
+        background: #1E1E1E;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
     }
     </style>
     """,
