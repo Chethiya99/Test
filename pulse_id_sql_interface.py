@@ -156,7 +156,7 @@ def render_query_section():
                     extract_task = Task(
                         description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
                         agent=extractor_agent,
-                        expected_output="A structured list of merchants, their associated email addresses, and image URLs (except 'PUlse id') extracted from the given text.please If any of merchants or emails are unavailable, return ''."
+                        expected_output="A structured list of merchants, their associated email addresses, and image URLs (except 'PUlse id') extracted from the given text. If any of merchants or emails are unavailable, return ''."
                     )
                     
                     # Crew execution for extraction 
@@ -191,8 +191,8 @@ if st.session_state.interaction_history:
             st.markdown("**Raw Output:**")
             st.write(interaction['content']['raw_output'])
             
-            # Only display extracted merchants if there is data
-            if interaction['content']['extraction_results'] and interaction['content']['extraction_results'].raw:
+            # Only display extracted merchants if there is data and it does not contain ''
+            if interaction['content']['extraction_results'] and interaction['content']['extraction_results'].raw and '' not in interaction['content']['extraction_results'].raw:
                 st.markdown("**Extracted Merchants:**")
                 st.write(interaction['content']['extraction_results'].raw)
         
@@ -206,8 +206,8 @@ if st.session_state.interaction_history:
 if not st.session_state.interaction_history:
     render_query_section()
 
-# Email Generator Button (only show if merchant data is available)
-if st.session_state.merchant_data and st.session_state.extraction_results and st.session_state.extraction_results.raw:
+# Email Generator Button (only show if merchant data is available and does not contain '')
+if st.session_state.merchant_data and st.session_state.extraction_results and st.session_state.extraction_results.raw and '' not in st.session_state.extraction_results.raw:
     if st.button("Generate Emails For Above Extracted Merchants", key="generate_emails"):
         with st.spinner("Generating emails..."):
             try:
