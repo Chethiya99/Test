@@ -156,7 +156,7 @@ def render_query_section():
                     extract_task = Task(
                         description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
                         agent=extractor_agent,
-                        expected_output="A structured list of merchants, their associated email addresses, and image URLs (except 'PUlse id') extracted from the given text. If any of merchants or emails are unavailable, return '@'."
+                        expected_output="A structured list of merchants, their associated email addresses, and image URLs (except 'PUlse id') extracted from the given text. If any of merchants or emails are unavailable, return 'pulseid'."
                     )
                     
                     # Crew execution for extraction 
@@ -192,7 +192,7 @@ if st.session_state.interaction_history:
             st.write(interaction['content']['raw_output'])
             
             # Only display extracted merchants if there is data and it does not contain ''
-            if interaction['content']['extraction_results'] and interaction['content']['extraction_results'].raw and '@' not in interaction['content']['extraction_results'].raw:
+            if interaction['content']['extraction_results'] and interaction['content']['extraction_results'].raw and 'pulseid' not in interaction['content']['extraction_results'].raw:
                 st.markdown("**Extracted Merchants:**")
                 st.write(interaction['content']['extraction_results'].raw)
                 
