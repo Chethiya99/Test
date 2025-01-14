@@ -250,8 +250,8 @@ if st.session_state.interaction_history:
                                     "content": email_body
                                 })
                                 
-                                # Display the email
-                                st.markdown(email_body, unsafe_allow_html=True)
+                                # Trigger a re-run to update the UI
+                                st.session_state.trigger_rerun = True
 
                         except Exception as e:
                             st.error(f"Error generating emails: {str(e)}")
