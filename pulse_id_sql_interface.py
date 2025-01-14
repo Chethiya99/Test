@@ -156,7 +156,7 @@ def render_query_section():
                     extract_task = Task(
                         description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
                         agent=extractor_agent,
-                        expected_output="A structured list of merchants, their associated email addresses, and image URLs extracted from the given text. If no merchants or emails are available, return an empty string without any additional text."
+                        expected_output="A structured list of merchants, their associated email addresses, and image URLs (except 'PUlse id') extracted from the given text. If no merchants or emails are available, return an empty string without any additional text."
                     )
                     
                     # Crew execution for extraction 
@@ -206,13 +206,8 @@ if st.session_state.interaction_history:
 if not st.session_state.interaction_history:
     render_query_section()
 
-# Email Generator Button (only show if merchant data is available and does not contain the keyword "no")
-if (
-    st.session_state.merchant_data
-    and st.session_state.extraction_results
-    and st.session_state.extraction_results.raw
-    and "no" not in st.session_state.extraction_results.raw.lower()
-):
+# Email Generator Button (only show if merchant data is available)
+if st.session_state.merchant_data and st.session_state.extraction_results and st.session_state.extraction_results.raw:
     if st.button("Generate Emails For Above Extracted Merchants", key="generate_emails"):
         with st.spinner("Generating emails..."):
             try:
