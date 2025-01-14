@@ -206,8 +206,13 @@ if st.session_state.interaction_history:
 if not st.session_state.interaction_history:
     render_query_section()
 
-# Email Generator Button (only show if merchant data is available)
-if st.session_state.merchant_data and st.session_state.extraction_results and st.session_state.extraction_results.raw:
+# Email Generator Button (only show if merchant data is available and does not contain the keyword "no")
+if (
+    st.session_state.merchant_data
+    and st.session_state.extraction_results
+    and st.session_state.extraction_results.raw
+    and "no" not in st.session_state.extraction_results.raw.lower()
+):
     if st.button("Generate Emails For Above Extracted Merchants", key="generate_emails"):
         with st.spinner("Generating emails..."):
             try:
