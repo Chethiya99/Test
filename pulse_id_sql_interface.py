@@ -20,10 +20,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for colorful UI
+# Custom CSS for Dark Theme
 st.markdown(
     """
     <style>
+    /* Dark background for the entire app */
+    body {
+        background-color: #1E1E1E;
+        color: #E0E0E0;
+    }
     /* Gradient background for headers */
     .gradient-header {
         background: linear-gradient(90deg, #4CAF50, #2196F3);
@@ -34,13 +39,14 @@ st.markdown(
         font-size: 24px;
         font-weight: bold;
     }
-    /* Card-like sections */
+    /* Dark card-like sections */
     .card {
-        background: white;
+        background: #2E2E2E;
         padding: 20px;
         border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         margin-bottom: 20px;
+        color: #E0E0E0;
     }
     /* Colorful buttons */
     .stButton button {
@@ -69,11 +75,22 @@ st.markdown(
     .predefined-button:hover {
         background: linear-gradient(90deg, #e65a50, #e6b850);
     }
+    /* Sidebar styling */
+    .css-1d391kg, .css-1d391kg p {
+        background-color: #2E2E2E !important;
+        color: #E0E0E0 !important;
+    }
+    /* Text area styling */
+    .stTextArea textarea {
+        background-color: #2E2E2E !important;
+        color: #E0E0E0 !important;
+        border: 1px solid #4CAF50 !important;
+    }
     /* Footer styling */
     .footer {
         text-align: center;
         font-size: 14px;
-        color: #555;
+        color: #E0E0E0;
         margin-top: 20px;
     }
     </style>
@@ -122,7 +139,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 st.markdown(
-    "<h4 style='text-align: center; color: #555;'>Interact with your merchant database and generate emails with ease!</h4>",
+    "<h4 style='text-align: center; color: #E0E0E0;'>Interact with your merchant database and generate emails with ease!</h4>",
     unsafe_allow_html=True
 )
 
