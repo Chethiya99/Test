@@ -202,9 +202,8 @@ if st.session_state.interaction_history:
         
         st.markdown("---")
 
-# Initial "Enter Query" section (if no interactions yet)
-if not st.session_state.interaction_history:
-    render_query_section()
+# Always render the "Ask questions about your database" section
+render_query_section()
 
 # Email Generator Button (only show if merchant data is available and does not contain '')
 if st.session_state.merchant_data and st.session_state.extraction_results and st.session_state.extraction_results.raw and '' not in st.session_state.extraction_results.raw:
@@ -267,9 +266,6 @@ if st.session_state.merchant_data and st.session_state.extraction_results and st
 
             except Exception as e:
                 st.error(f"Error generating emails: {str(e)}")
-
-    # Render the "Enter Query" section below the "Generate Emails" button
-    render_query_section()
 
 # Trigger a re-run if needed
 if st.session_state.trigger_rerun:
