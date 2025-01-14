@@ -172,7 +172,7 @@ def render_query_section():
                     extract_task = Task(
                         description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
                         agent=extractor_agent,
-                        expected_output="A structured list of merchant names, their associated email addresses, image URLs (except 'Pulse id') extracted from the given text. If on;y any of merchant names or emails are unavailable, return 'errorhappened'."
+                        expected_output="A structured list of merchant names, their associated email addresses (except 'Pulse id') extracted from the given text. If any of merchant names or emails are unavailable, return 'errorhappened'."
                     )
                     
                     # Crew execution for extraction 
