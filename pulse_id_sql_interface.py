@@ -98,19 +98,11 @@ st.sidebar.success(f"✅ Selected Template: {st.session_state.selected_template}
 # Initialize SQL Database and Agent
 if st.session_state.selected_db and api_key and not st.session_state.db_initialized:
     try:
-        # Define company details and agent role
-        company_details = """
-        Pulse iD is a fintech company specializing in merchant solutions and personalized marketing. 
-        As a marketing agent for Pulse iD, my role is to assist you in querying the merchant database 
-        and generating personalized emails for marketing purposes.
-        """
-
-        # Initialize Groq LLM with company details
+        # Initialize Groq LLM
         llm = ChatGroq(
             temperature=0,
             model_name=model_name,
-            api_key=st.session_state.api_key,
-            system_message=company_details  # Pass company details as system message
+            api_key=st.session_state.api_key
         )
 
         # Initialize SQLDatabase
@@ -137,8 +129,18 @@ def render_query_section():
         if user_query:
             with st.spinner("Running query..."):
                 try:
+                    # Define company details and agent role
+                    company_details = """
+                    Pulse iD is a fintech company specializing in merchant solutions and personalized marketing. 
+                    As a marketing agent for Pulse iD, my role is to assist you in querying the merchant database 
+                    and generating personalized emails for marketing purposes.
+                    """
+
+                    # Prepend company details to the user's query
+                    full_query = f"{company_details}\n\nUser Query: {user_query}"
+
                     # Execute the query using the agent
-                    result = st.session_state.agent_executor.invoke(user_query)
+                    result = st.session_state.agent_executor.invoke(full_query)
                     st.session_state.raw_output = result['output'] if isinstance(result, dict) else result
                     
                     # Append the query and results to the interaction history
