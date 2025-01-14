@@ -98,10 +98,24 @@ st.sidebar.success(f"✅ Selected Template: {st.session_state.selected_template}
 # Initialize SQL Database and Agent
 if st.session_state.selected_db and api_key and not st.session_state.db_initialized:
     try:
-        # Initialize Groq LLM
-        llm = ChatGroq(temperature=0, model_name=model_name, api_key=st.session_state.api_key)
+        # Define company details and agent role
+        company_details = """
+        Pulse iD is a fintech company specializing in merchant solutions and personalized marketing. 
+        As a marketing agent for Pulse iD, my role is to assist you in querying the merchant database 
+        and generating personalized emails for marketing purposes.
+        """
+
+        # Initialize Groq LLM with company details
+        llm = ChatGroq(
+            temperature=0,
+            model_name=model_name,
+            api_key=st.session_state.api_key,
+            system_message=company_details  # Pass company details as system message
+        )
+
         # Initialize SQLDatabase
         st.session_state.db = SQLDatabase.from_uri(f"sqlite:///{st.session_state.selected_db}", sample_rows_in_table_info=3)
+
         # Create SQL Agent
         st.session_state.agent_executor = create_sql_agent(
             llm=llm,
@@ -127,41 +141,17 @@ def render_query_section():
                     result = st.session_state.agent_executor.invoke(user_query)
                     st.session_state.raw_output = result['output'] if isinstance(result, dict) else result
                     
-                    # Process raw output using an extraction agent 
-                    extractor_llm = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
-                    extractor_agent = Agent(
-                        role="Data Extractor",
-                        goal="Extract merchants, emails from the raw output if they are only available.",
-                        backstory="You are an expert in extracting structured information from text.",
-                        provider="Groq",
-                        llm=extractor_llm 
-                    )
-                    
-                    extract_task = Task(
-                        description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
-                        agent=extractor_agent,
-                        expected_output="A structured list of merchants, their associated email addresses extracted from the given text. please dont output any text if they are not available."
-                    )
-                    
-                    # Crew execution for extraction 
-                    extraction_crew = Crew(agents=[extractor_agent], tasks=[extract_task], process=Process.sequential)
-                    extraction_results = extraction_crew.kickoff()
-                    st.session_state.extraction_results = extraction_results if extraction_results else ""
-                    st.session_state.merchant_data = st.session_state.extraction_results
-                    
                     # Append the query and results to the interaction history
                     st.session_state.interaction_history.append({
                         "type": "query",
                         "content": {
                             "query": user_query,
-                            "raw_output": st.session_state.raw_output,
-                            "extraction_results": st.session_state.extraction_results
+                            "raw_output": st.session_state.raw_output
                         }
                     })
                     
                     # Trigger a re-run to update the UI
                     st.session_state.trigger_rerun = True
-                
                 except Exception as e:
                     st.error(f"Error executing query: {str(e)}")
         else:
@@ -173,14 +163,8 @@ if st.session_state.interaction_history:
     for idx, interaction in enumerate(st.session_state.interaction_history):
         if interaction["type"] == "query":
             st.markdown(f"#### Query: {interaction['content']['query']}")
-            st.markdown("**Raw Output:**")
+            st.markdown("**Response:**")
             st.write(interaction['content']['raw_output'])
-            if interaction['content']['extraction_results']:
-                st.markdown("**Extracted Merchants:**")
-                st.write(interaction['content']['extraction_results'].raw)
-        elif interaction["type"] == "email":
-            st.markdown("#### Generated Email:")
-            st.markdown(interaction['content'], unsafe_allow_html=True)
         
         st.markdown("---")
 
