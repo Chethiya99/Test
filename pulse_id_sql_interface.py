@@ -257,7 +257,7 @@ if st.session_state.interaction_history:
 
                                 # Insert image into the email body at a specific position (after "Dear Merchant Name")
                                 if image_url:
-                                    modified_email_body = email_body.replace("Dear", f"Dear,<br><img src='' style='max-width: 100%;' />")
+                                    modified_email_body = email_body.replace("Dear", f" ")
                                     email_body = modified_email_body
                                 
                                 # Append the generated email to the interaction history
