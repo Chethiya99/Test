@@ -122,11 +122,11 @@ if st.session_state.selected_db and api_key and not st.session_state.db_initiali
 
 # Function to render the "Enter Query" section
 def render_query_section():
-    st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
+    st.markdown("#### Get to know the Merchant Target List:", unsafe_allow_html=True)
     
     # Predefined questions
     predefined_questions = [
-        "Who are You?",
+        "Who are you?",
         "Give first merchant name and their email",
         "Give first two merchants names, their emails and their image urls"
         
