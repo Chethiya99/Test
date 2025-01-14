@@ -45,6 +45,8 @@ if 'selected_template' not in st.session_state:
     st.session_state.selected_template = "email_task_description1.txt"  # Default template
 if 'trigger_rerun' not in st.session_state:
     st.session_state.trigger_rerun = False  # Track if a re-run is needed
+if 'current_query' not in st.session_state:
+    st.session_state.current_query = ""  # Track the current query for predefined questions
 
 # Function to read the email task description from a text file
 def read_email_task_description(file_path):
@@ -120,10 +122,39 @@ if st.session_state.selected_db and api_key and not st.session_state.db_initiali
     except Exception as e:
         st.sidebar.error(f"Error: {str(e)}")
 
-# Function to render the "Enter Query" section
+# Function to render the "Enter Query" section with predefined questions
 def render_query_section():
     st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
-    user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.", key=f"query_{len(st.session_state.interaction_history)}")
+    
+    # Predefined questions
+    predefined_questions = [
+        "Give first five merchant names and their emails",
+        "Give first 10 merchants, their emails, and their image URLs",
+        "Who are You?",
+        "Show top 10 merchants by transaction volume",
+        "List merchants with email addresses containing 'gmail.com'",
+        "Find merchants located in Dubai",
+        "Retrieve merchants with the highest number of transactions",
+        "Get merchants with missing email addresses",
+        "List merchants with the oldest establishment dates",
+        "Find merchants with the most recent transactions"
+    ]
+    
+    # Display buttons for predefined questions
+    st.markdown("**Predefined Questions:**")
+    cols = st.columns(3)  # Adjust the number of columns as needed
+    for idx, question in enumerate(predefined_questions):
+        with cols[idx % 3]:  # Distribute buttons across columns
+            if st.button(question, key=f"predefined_question_{idx}"):
+                st.session_state.current_query = question  # Store the selected question in session state
+    
+    # Text area for user input or predefined question
+    user_query = st.text_area(
+        "Enter your query:",
+        value=st.session_state.get("current_query", ""),  # Populate with the selected question
+        placeholder="E.g., Show top 10 merchants and their emails.",
+        key=f"query_{len(st.session_state.interaction_history)}"
+    )
     
     if st.button("Run Query", key=f"run_query_{len(st.session_state.interaction_history)}"):
         if user_query:
@@ -191,7 +222,7 @@ if st.session_state.interaction_history:
             st.markdown("**Raw Output:**")
             st.write(interaction['content']['raw_output'])
             
-            # Only display extracted merchants if there is data and it does not contain ''
+            # Only display extracted merchants if there is data and it does not contain 'errorhappened'
             if interaction['content']['extraction_results'] and interaction['content']['extraction_results'].raw and 'errorhappened' not in interaction['content']['extraction_results'].raw:
                 st.markdown("**Extracted Merchants:**")
                 st.write(interaction['content']['extraction_results'].raw)
