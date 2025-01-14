@@ -123,23 +123,7 @@ if st.session_state.selected_db and api_key and not st.session_state.db_initiali
 # Function to render the "Enter Query" section
 def render_query_section():
     st.markdown("#### Ask questions about your database:", unsafe_allow_html=True)
-    
-    # Predefined questions
-    predefined_questions = [
-        "Give first five merchant names and their emails",
-        "Give first 10 merchants, their emails and their image urls",
-        "Who are You?"
-    ]
-    
-    # Display buttons for predefined questions
-    st.markdown("**Predefined Questions:**")
-    for question in predefined_questions:
-        if st.button(question, key=f"predefined_{question}"):
-            st.session_state.user_query = question  # Store the question in session state
-            st.session_state.trigger_rerun = True  # Trigger a re-run to process the query
-    
-    # Text area for user input
-    user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.", key=f"query_{len(st.session_state.interaction_history)}", value=st.session_state.get('user_query', ''))
+    user_query = st.text_area("Enter your query:", placeholder="E.g., Show top 10 merchants and their emails.", key=f"query_{len(st.session_state.interaction_history)}")
     
     if st.button("Run Query", key=f"run_query_{len(st.session_state.interaction_history)}"):
         if user_query:
@@ -172,7 +156,7 @@ def render_query_section():
                     extract_task = Task(
                         description=f"Extract a list of 'merchants' and their 'emails', 'image urls' from the following text:\n\n{st.session_state.raw_output}",
                         agent=extractor_agent,
-                        expected_output="A structured list of merchants, their associated email addresses, image URLs (except 'Pulse id') extracted from the given text. plrease If any of merchants, emails are unavailable, return 'errorhappened'."
+                        expected_output="A structured list of merchants, their associated email addresses, image URLs (except 'Pulse id') extracted from the given text. If any of merchants and emails are unavailable, return 'errorhappened'."
                     )
                     
                     # Crew execution for extraction 
