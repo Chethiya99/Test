@@ -195,6 +195,66 @@ if st.session_state.interaction_history:
             if interaction['content']['extraction_results'] and interaction['content']['extraction_results'].raw and '' not in interaction['content']['extraction_results'].raw:
                 st.markdown("**Extracted Merchants:**")
                 st.write(interaction['content']['extraction_results'].raw)
+                
+                # Show the "Generate Emails" button for this specific interaction
+                if st.button(f"Generate Emails for Query {idx + 1}", key=f"generate_emails_{idx}"):
+                    with st.spinner("Generating emails..."):
+                        try:
+                            # Define email generation agent 
+                            llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
+                            email_agent = Agent(
+                                role="Email Content Generator",
+                                goal="Generate personalized marketing emails for merchants.",
+                                backstory="You are a marketing expert named 'Sumit Uttamchandani' of Pulse iD fintech company skilled in crafting professional and engaging emails for merchants.",
+                                verbose=True,
+                                allow_delegation=False,
+                                llm=llm_email 
+                            )
+
+                            # Read the task description from the selected template file
+                            description_file_path = f"email_descriptions/{st.session_state.selected_template}"
+                            email_task_description = read_email_task_description(description_file_path)
+
+                            # Email generation task using extracted results 
+                            task = Task(
+                                description=email_task_description.format(merchant_data=interaction['content']['extraction_results'].raw),
+                                agent=email_agent,
+                                expected_output="Marketing emails for each selected merchant, tailored to their business details. Please tell the user to extract merchants first if there are no data available for emails, merchant names."
+                            )
+
+                            # Crew execution 
+                            crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
+                            email_results = crew.kickoff()
+                            
+                            # Display results 
+                            if email_results.raw:
+                                email_body = email_results.raw  # Get the raw email content
+                                
+                                # Function to extract image URL from email body
+                                def extract_image_url(email_body):
+                                    url_pattern = r'https?://[^\s]+'
+                                    urls = re.findall(url_pattern, email_body)
+                                    return urls[0] if urls else None
+
+                                # Extract image URL from the email body
+                                image_url = extract_image_url(email_body)
+
+                                # Insert image into the email body at a specific position (after "Dear Merchant Name")
+                                if image_url:
+                                    modified_email_body = email_body.replace("Dear", f"Dear,<br><img src='{image_url}' style='max-width: 100%;' />")
+                                    email_body = modified_email_body
+                                
+                                # Append the generated email to the interaction history
+                                st.session_state.interaction_history.append({
+                                    "type": "email",
+                                    "content": email_body
+                                })
+                                
+                                # Display the email
+                                st.markdown(email_body, unsafe_allow_html=True)
+
+                        except Exception as e:
+                            st.error(f"Error generating emails: {str(e)}")
         
         elif interaction["type"] == "email":
             st.markdown("#### Generated Email:")
@@ -204,68 +264,6 @@ if st.session_state.interaction_history:
 
 # Always render the "Ask questions about your database" section
 render_query_section()
-
-# Email Generator Button (only show if merchant data is available and does not contain '')
-if st.session_state.merchant_data and st.session_state.extraction_results and st.session_state.extraction_results.raw and '' not in st.session_state.extraction_results.raw:
-    if st.button("Generate Emails For Above Extracted Merchants", key="generate_emails"):
-        with st.spinner("Generating emails..."):
-            try:
-                # Define email generation agent 
-                llm_email = LLM(model="groq/llama-3.1-70b-versatile", api_key=st.session_state.api_key)
-                email_agent = Agent(
-                    role="Email Content Generator",
-                    goal="Generate personalized marketing emails for merchants.",
-                    backstory="You are a marketing expert named 'Sumit Uttamchandani' of Pulse iD fintech company skilled in crafting professional and engaging emails for merchants.",
-                    verbose=True,
-                    allow_delegation=False,
-                    llm=llm_email 
-                )
-
-                # Read the task description from the selected template file
-                description_file_path = f"email_descriptions/{st.session_state.selected_template}"
-                email_task_description = read_email_task_description(description_file_path)
-
-                # Email generation task using extracted results 
-                task = Task(
-                    description=email_task_description.format(merchant_data=st.session_state.merchant_data),
-                    agent=email_agent,
-                    expected_output="Marketing emails for each selected merchant, tailored to their business details. Please tell the user to extract merchants first if there are no data available for emails, merchant names."
-                )
-
-                # Crew execution 
-                crew = Crew(agents=[email_agent], tasks=[task], process=Process.sequential)
-                email_results = crew.kickoff()
-                st.session_state.email_results = email_results
-                
-                # Display results 
-                if email_results.raw:
-                    email_body = email_results.raw  # Get the raw email content
-                    
-                    # Function to extract image URL from email body
-                    def extract_image_url(email_body):
-                        url_pattern = r'https?://[^\s]+'
-                        urls = re.findall(url_pattern, email_body)
-                        return urls[0] if urls else None
-
-                    # Extract image URL from the email body
-                    image_url = extract_image_url(email_body)
-
-                    # Insert image into the email body at a specific position (after "Dear Merchant Name")
-                    if image_url:
-                        modified_email_body = email_body.replace("Dear", f"Dear,<br><img src='{image_url}' style='max-width: 100%;' />")
-                        email_body = modified_email_body
-                    
-                    # Append the generated email to the interaction history
-                    st.session_state.interaction_history.append({
-                        "type": "email",
-                        "content": email_body
-                    })
-                    
-                    # Display the email
-                    st.markdown(email_body, unsafe_allow_html=True)
-
-            except Exception as e:
-                st.error(f"Error generating emails: {str(e)}")
 
 # Trigger a re-run if needed
 if st.session_state.trigger_rerun:
